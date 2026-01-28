@@ -21,6 +21,10 @@ jobs:
   demo:
     runs-on: ubuntu-latest
     steps:
+    - name: Debug inputs
+      run: |
+        echo "Contenido de input:"
+        echo '${{ toJSON(github.event.inputs) }}'
     - name: Paso 1 - Crear output
       id: get_version  # 👈 ID CRÍTICO: nombre que usarás después
       run: |
@@ -30,8 +34,6 @@ jobs:
         echo "Ruta de GITHUB_OUTPUT: $GITHUB_OUTPUT"
         
         # Mostrar contenido actual (vacío al inicio)
-        echo "Contenido de input:"
-        echo ${{ toJSON(github.event.inputs) }} 
         echo "Contenido inicial:"
         cat "$GITHUB_OUTPUT" || echo "(archivo vacío)"
         
