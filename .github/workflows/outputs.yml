@@ -1,7 +1,22 @@
 name: Debug outputs
 
-on: workflow_dispatch  # Ejecución manual para testing
-
+on: 
+  workflow_dispatch:  # Ejecución manual para testing
+    inputs:
+        environment:   # 👈 Nombre del input (tú lo defines)
+          description: "Entorno de despliegue"
+          required: true
+          type: choice
+          options:
+            - production
+            - staging
+            - development
+        
+        debug-mode:
+          description: "Habilitar modo debug"
+          required: false
+          default: false
+          type: boolean
 jobs:
   demo:
     runs-on: ubuntu-latest
