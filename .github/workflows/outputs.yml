@@ -30,6 +30,8 @@ jobs:
         echo "Ruta de GITHUB_OUTPUT: $GITHUB_OUTPUT"
         
         # Mostrar contenido actual (vacío al inicio)
+        echo "Contenido de input:"
+        echo ${{ github.event.inputs }} 
         echo "Contenido inicial:"
         cat "$GITHUB_OUTPUT" || echo "(archivo vacío)"
         
