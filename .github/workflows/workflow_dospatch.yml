@@ -25,7 +25,7 @@ jobs:
         run: |
           echo "Contenido de input:"
           echo '${{ toJSON(github.event.inputs) }}'
-          $JSON='${{ toJSON(github.event.inputs) }}'
+          JSON='${{ toJSON(github.event.inputs) }}'
           
           echo $JSON  
   read_write_outputs:
