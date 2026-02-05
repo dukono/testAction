@@ -1,4 +1,4 @@
-# 🚀 GitHub Actions & Git - Proyecto de Aprendizaje Completo
+# 🚀 GitHub Actions & Git - Proyecto de Aprendizaje Completo A
 
 Este repositorio es una **guía completa y práctica** que cubre:
 - **Git**: Funcionamiento interno, arquitectura y principios
