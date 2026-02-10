@@ -5,6 +5,7 @@
 ---
 
 <a id="tabla-de-contenidos"></a>
+
 ## 📚 Tabla de Contenidos
 
 ### COMANDOS BÁSICOS ESENCIALES
@@ -38,6 +39,9 @@
 ### LIMPIEZA Y MANTENIMIENTO
 20. [git clean - Limpiando Archivos No Rastreados](#20-git-clean---limpiando-archivos-no-rastreados)
 21. [git rm y git mv - Eliminando y Moviendo Archivos](#21-git-rm-y-git-mv---eliminando-y-moviendo-archivos)
+
+### REFERENCIAS Y FORMATO AVANZADO
+22. [Referencias y Placeholders de Formato](#22-referencias-y-placeholders-de-formato)
 
 ---
 
@@ -1077,74 +1081,633 @@ git log --oneline --graph --all
 [⬆️ Top](#tabla-de-contenidos)
 
 **¿Qué hace?**
-Muestra la historia de commits del repositorio.
+Muestra la historia de commits del repositorio con múltiples opciones de filtrado, formato y análisis. Es una herramienta fundamental para entender la evolución del código, buscar bugs, auditar cambios y analizar contribuciones.
 
 **Funcionamiento interno:**
 ```
-1. Obtiene commit actual (HEAD)
-2. Sigue cadena de parents recursivamente
-3. Formatea output según opciones
+1. Lee HEAD (o referencia especificada)
+2. Obtiene commit object del hash
+3. Lee metadata: author, date, message, tree, parents
+4. Sigue recursivamente la cadena de commits anteriores
+5. Aplica filtros especificados (autor, fecha, mensaje, archivos)
+6. Formatea output según opciones (oneline, graph, stat, patch)
+7. Pagina resultado (usa less por defecto)
+
+Optimizaciones:
+- Usa commit-graph para acelerar traversal
+- Cache de objetos en memoria
+- Traversal paralelo en repos grandes
 ```
 
-**Uso práctico:**
+**Uso práctico - Formatos básicos:**
 
 ```bash
-# Log básico
+# ============================================
+# FORMATOS DE VISUALIZACIÓN
+# ============================================
+
+# 1. Log básico (verbose, por defecto)
 git log
+# Muestra:
+# - Hash completo
+# - Autor y email
+# - Fecha
+# - Mensaje completo
 
-# Log compacto (UNA LÍNEA)
+# 2. Log compacto (UNA LÍNEA por commit)
 git log --oneline
+# Formato: hash-corto mensaje
+# Ejemplo: abc123 Add user authentication
 
-# Log con grafo visual
+# 3. Log con decoraciones (refs)
+git log --oneline --decorate
+# Muestra: HEAD, ramas, tags
+# Ejemplo: abc123 (HEAD -> main, origin/main) Add feature
+
+# 4. Log con grafo visual (SUPER ÚTIL)
+git log --oneline --graph
+# Muestra estructura de ramas y merges
+# Ejemplo:
+# * abc123 Merge branch 'feature'
+# |\
+# | * def456 Add feature
+# |/
+# * 789abc Initial commit
+
+# 5. Log con grafo de todas las ramas
 git log --oneline --graph --all
+# → Muestra TODO el repositorio
+# → Incluye ramas locales y remotas
+# → Muy útil para overview completo
 
-# Log de archivo específico
-git log -- archivo.txt
-git log --follow -- archivo.txt  # Sigue renames
-
-# Log con diff
-git log -p
-git log -p -2  # Últimos 2 commits
-
-# Log con stats
+# 6. Log con estadísticas de cambios
 git log --stat
+# Muestra archivos modificados y líneas +/-
+# archivo.txt | 10 +++++-----
 
-# Log con formato personalizado
+# 7. Log con diff completo (patch)
+git log -p
+# o: git log --patch
+# → Muestra diff de cada commit
+# → Útil para code review histórico
+
+# 8. Log con diff de últimos N commits
+git log -p -2
+# → Solo últimos 2 commits con diff
+
+# 9. Log con resumen corto
+git log --oneline --stat
+# → Combina hash + mensaje + stats
+# → Balance perfecto de info
+
+# 10. Log con formato personalizado
 git log --pretty=format:"%h - %an, %ar : %s"
+# Formato: hash - autor, fecha relativa : mensaje
+# Ejemplo: abc123 - John, 2 days ago : Fix bug
 
-# Búsqueda en log
-git log --grep="fix"  # En mensaje
-git log -S"función"  # En código (pickaxe)
-
-# Log de rango
-git log main..feature-x  # Commits en feature no en main
-git log main...feature-x  # Commits que difieren
-
-# Por autor
-git log --author="John"
-
-# Por fecha
-git log --since="2 weeks ago"
-git log --after="2024-01-01" --before="2024-12-31"
-
-# Solo merges / sin merges
-git log --merges
-git log --no-merges
-
-# Ver commit específico
-git show abc123
-git show HEAD~3
+# 11. Formatos predefinidos
+git log --pretty=oneline
+git log --pretty=short
+git log --pretty=medium  # Default
+git log --pretty=full
+git log --pretty=fuller
+git log --pretty=reference
 ```
 
-**Alias útiles (añadir a ~/.gitconfig):**
+**Uso práctico - Filtros por rango de commits:**
+
+```bash
+# ============================================
+# RANGOS Y EXCLUSIONES
+# ============================================
+
+# 1. Commits en rama A pero NO en rama B
+git log main..feature-x
+# → Commits únicos de feature-x
+# → Útil para ver qué traerá el merge
+
+git log origin/main..HEAD
+# → Commits locales no pusheados
+# → Equivalente a: git log @{u}..HEAD
+
+# 2. Commits que difieren entre ramas (symmetric difference)
+git log main...feature-x
+# → Commits en A o B pero no en ambas
+# → Muestra divergencia
+
+# 3. Excluir commits (operador NOT)
+git log main --not feature-x
+# → Commits en main que NO están en feature-x
+# → Equivalente a: git log feature-x..main
+
+git log --all --not origin/main
+# → Todo excepto lo que está en origin/main
+# → Útil para ver trabajo local en todas las ramas
+
+git log HEAD --not origin/main --not origin/develop
+# → Commits locales no pusheados a ninguna de esas ramas
+
+# 4. Commits que tocan archivo específico
+git log -- archivo.txt
+# → Historia de archivo específico
+# → El "--" previene confusión con ramas
+
+git log --all -- archivo.txt
+# → Busca archivo en TODAS las ramas
+
+# 5. Commits entre dos fechas
+git log --since="2024-01-01" --until="2024-12-31"
+# o: --after / --before
+
+git log --since="2 weeks ago"
+git log --since="yesterday"
+git log --after="2024-01-01 10:30"
+
+# 6. Últimos N commits
+git log -n 5
+# o: git log -5
+# → Solo 5 commits más recientes
+
+# 7. Commits desde tag específico
+git log v1.0.0..HEAD
+# → Commits desde release v1.0.0 hasta ahora
+
+# 8. Primeros N commits (más antiguos)
+git log --reverse | head -20
+# → Invierte orden, muestra más antiguos
+
+# 9. Commits de merge específicamente
+git log --merges
+# → Solo merge commits
+
+git log --no-merges
+# → Excluye merge commits (útil para features)
+
+# 10. Commits que NO están en remoto
+git log origin/main..HEAD --oneline
+# → Ver qué falta pushear
+```
+
+**Uso práctico - Búsquedas y filtros:**
+
+```bash
+# ============================================
+# BÚSQUEDA EN COMMITS
+# ============================================
+
+# 1. Buscar en mensaje de commit
+git log --grep="fix"
+# → Commits con "fix" en el mensaje
+# → Case-sensitive por defecto
+
+git log --grep="bug" --grep="fix" --all-match
+# → Commits con AMBAS palabras
+
+git log --grep="feature" --grep="refactor" 
+# → Commits con CUALQUIERA de las palabras (OR)
+
+git log -i --grep="FIX"
+# → Case-insensitive
+
+# 2. Buscar por autor
+git log --author="John"
+git log --author="john@example.com"
+git log --author="John\|Maria"  # Regex: John O Maria
+
+# 3. Buscar por committer (diferente de author)
+git log --committer="Jenkins"
+# → Útil para commits automáticos
+
+# 4. Buscar cambios en código (pickaxe)
+git log -S"función_importante"
+# → Commits que AÑADIERON o ELIMINARON ese string
+# → Super útil para encontrar cuándo desapareció algo
+
+git log -S"password" --all
+# → Busca en todas las ramas
+
+# 5. Buscar cambios en código (con diff)
+git log -G"regex.*pattern"
+# → Commits donde el diff matchea el regex
+# → Más flexible que -S
+
+# 6. Buscar por función específica (para lenguajes soportados)
+git log -L :nombre_funcion:archivo.py
+# → Historia de esa función específica
+# → Sigue renames y movimientos
+
+git log -L 10,20:archivo.txt
+# → Historia de líneas 10-20 de archivo
+
+# 7. Commits que afectan ruta específica
+git log -- src/
+git log -- "*.js"
+git log -- src/**/*.py
+
+# 8. Commits que tocan múltiples archivos
+git log -- archivo1.txt archivo2.txt
+
+# 9. Buscar commits que modificaron archivo específico
+git log --diff-filter=M -- archivo.txt
+# M = modificado
+# A = añadido
+# D = eliminado
+# R = renombrado
+# C = copiado
+
+git log --diff-filter=D --summary
+# → Archivos eliminados
+
+# 10. Seguir renames de archivo
+git log --follow -- archivo.txt
+# → Sigue historia aunque cambie de nombre
+# → IMPORTANTE para archivos renombrados
+```
+
+**Uso práctico - Formatos personalizados avanzados:**
+
+```bash
+# ============================================
+# PRETTY FORMATS (PERSONALIZACIÓN)
+# ============================================
+
+# Placeholders comunes:
+# %H  - Hash completo
+# %h  - Hash corto
+# %T  - Tree hash
+# %P  - Parent hashes
+# %an - Author name
+# %ae - Author email
+# %ad - Author date
+# %ar - Author date, relative (2 days ago)
+# %cn - Committer name
+# %cd - Commit date
+# %cr - Commit date, relative
+# %s  - Subject (mensaje)
+# %b  - Body (mensaje completo)
+# %d  - Ref names (HEAD, branches, tags)
+
+# Colores:
+# %C(red), %C(green), %C(blue), %C(yellow)
+# %C(bold), %C(dim), %C(reset)
+
+# 1. Formato compacto con autor y fecha
+git log --pretty=format:"%h %an %ar: %s"
+# abc123 John 2 days ago: Fix bug
+
+# 2. Formato con colores
+git log --pretty=format:"%C(yellow)%h%C(reset) %C(blue)%an%C(reset) %s"
+
+# 3. Formato para CSV/export
+git log --pretty=format:"%h,%an,%ae,%ad,%s" --date=short > commits.csv
+
+# 4. Formato con árbol decorado
+git log --graph --pretty=format:"%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s %C(bold yellow)%d%C(reset)"
+
+# 5. Mostrar parent commits
+git log --pretty=format:"%h %P %s"
+# → Útil para entender merges
+
+# 6. Formato JSON-like (para scripts)
+git log --pretty=format:'{"commit":"%H","author":"%an","date":"%ad","message":"%s"}' --date=iso
+
+# 7. Solo hash (para scripting)
+git log --pretty=format:"%H"
+
+# 8. Formato detallado con body
+git log --pretty=format:"%h - %an (%ar)%n%n  %s%n%n%b%n" -3
+```
+
+**Uso práctico - Filtros de archivos y paths:**
+
+```bash
+# ============================================
+# FILTROS POR ARCHIVOS Y RUTAS
+# ============================================
+
+# 1. Historia de archivo específico
+git log -- ruta/archivo.txt
+
+# 2. Historia de directorio
+git log -- src/utils/
+
+# 3. Archivos con patrón
+git log -- "*.js"
+git log -- "src/**/*.py"
+
+# 4. Múltiples archivos
+git log -- archivo1.txt archivo2.txt
+
+# 5. Excluir paths
+git log -- . ":(exclude)tests/"
+git log -- . ":(exclude)*.md"
+
+# 6. Solo archivos modificados (no añadidos/eliminados)
+git log --diff-filter=M
+
+# 7. Solo archivos añadidos
+git log --diff-filter=A --summary
+
+# 8. Solo archivos eliminados
+git log --diff-filter=D --name-only
+
+# 9. Solo archivos renombrados
+git log --diff-filter=R --summary
+
+# 10. Cambios en archivo específico con diff
+git log -p -- archivo.txt
+
+# 11. Mostrar nombres de archivos afectados
+git log --name-only
+git log --name-status  # Con tipo de cambio (M/A/D/R)
+
+# 12. Mostrar estadísticas por archivo
+git log --stat -- src/
+
+# 13. Seguir archivo renombrado
+git log --follow -- nuevo-nombre.txt
+# → Sigue historia aunque se haya renombrado
+```
+
+**Uso práctico - Análisis y estadísticas:**
+
+```bash
+# ============================================
+# ANÁLISIS DE REPOSITORIO
+# ============================================
+
+# 1. Contar commits por autor
+git log --pretty=format:"%an" | sort | uniq -c | sort -rn
+# Ejemplo output:
+#   150 John Doe
+#    95 Jane Smith
+#    42 Bob Johnson
+
+# 2. Contar commits por mes
+git log --pretty=format:"%ad" --date=short | cut -c1-7 | sort | uniq -c
+
+# 3. Actividad por día de la semana
+git log --pretty=format:"%ad" --date=format:"%A" | sort | uniq -c | sort -rn
+
+# 4. Ver quién modificó cada línea de archivo
+git blame archivo.txt
+git log -p -M --follow --stat -- archivo.txt
+
+# 5. Commits en última semana
+git log --since="1 week ago" --oneline | wc -l
+
+# 6. Tamaño de commits (líneas cambiadas)
+git log --shortstat --oneline
+
+# 7. Archivos más modificados
+git log --pretty=format: --name-only | sort | uniq -c | sort -rn | head -20
+
+# 8. Autores más activos en archivo
+git log --follow --pretty=format:"%an" -- archivo.txt | sort | uniq -c | sort -rn
+
+# 9. Frecuencia de commits por hora
+git log --pretty=format:"%ad" --date=format:"%H" | sort | uniq -c
+
+# 10. Velocidad de desarrollo (commits/día)
+git log --since="1 month ago" --pretty=format:"%ad" --date=short | sort | uniq -c
+```
+
+**Uso práctico - Debugging y bisect:**
+
+```bash
+# ============================================
+# ENCONTRAR BUGS Y CAMBIOS
+# ============================================
+
+# 1. ¿Cuándo se introdujo este string?
+git log -S"bug_causante" --source --all
+# → Encuentra commit que añadió/eliminó ese código
+
+# 2. ¿Cuándo se borró esta función?
+git log -G"function delete_user" --all
+
+# 3. ¿Quién cambió estas líneas?
+git log -L 150,160:archivo.py
+# → Historia de líneas 150-160
+
+# 4. ¿En qué commit desapareció este archivo?
+git log --all --full-history -- archivo-borrado.txt
+
+# 5. Ver cambios entre dos versiones
+git log v1.0..v2.0 --oneline
+
+# 6. Commits que tocaron archivo Y contienen palabra
+git log --grep="refactor" -- archivo.txt
+
+# 7. Primer commit que introdujo archivo
+git log --diff-filter=A --follow -- archivo.txt
+
+# 8. Último commit que tocó archivo
+git log -1 -- archivo.txt
+
+# 9. Commits ordenados por fecha de commit (no autor)
+git log --date-order
+
+# 10. Ver commit y sus cambios
+git show abc123
+git show abc123:archivo.txt  # Ver versión de archivo en ese commit
+```
+
+**Uso práctico - Visualización avanzada:**
+
+```bash
+# ============================================
+# GRAFOS Y VISUALIZACIÓN
+# ============================================
+
+# 1. Grafo completo decorado
+git log --oneline --graph --all --decorate
+
+# 2. Grafo solo de rama actual
+git log --oneline --graph
+
+# 3. Grafo con estadísticas
+git log --graph --stat --oneline
+
+# 4. Grafo compacto con fechas
+git log --graph --date=relative --pretty=format:"%h %ad %s"
+
+# 5. Ver merge commits con ambas líneas
+git log --oneline --graph --first-parent
+# → Sigue solo primera línea (más limpio en repos complejos)
+
+# 6. Simplificar grafo (solo merges importantes)
+git log --oneline --graph --simplify-by-decoration
+
+# 7. Topological order (respeta estructura)
+git log --topo-order --graph
+
+# 8. Reverse chronological (más recientes primero) - default
+git log --date-order
+
+# 9. Author order (por fecha de author, no commit)
+git log --author-date-order
+```
+
+**Opciones avanzadas y combinaciones:**
+
+```bash
+# ============================================
+# COMBINACIONES PODEROSAS
+# ============================================
+
+# 1. Commits no pusheados con diff
+git log origin/main..HEAD -p
+
+# 2. Actividad de autor en fecha específica
+git log --author="John" --since="2024-01-01" --until="2024-01-31" --oneline
+
+# 3. Commits que afectan múltiples áreas
+git log -- src/auth/ src/api/ --oneline
+
+# 4. Merges problemáticos (con conflictos resueltos)
+git log --merges -p --cc
+# --cc muestra combined diff
+
+# 5. Commits sin merge con stats de archivos JavaScript
+git log --no-merges --stat -- "*.js"
+
+# 6. Buscar en todas las ramas palabra en mensaje
+git log --all --grep="JIRA-123"
+
+# 7. Ver qué ramas contienen commit
+git branch --contains abc123
+
+# 8. Listar tags con sus commits
+git log --oneline --decorate --simplify-by-decoration
+
+# 9. Commits que modificaron permisos
+git log -p | grep "old mode\|new mode"
+
+# 10. Formato para code review
+git log --oneline --no-merges --reverse v1.0..HEAD
+```
+
+**Alias recomendados para .gitconfig:**
 
 ```bash
 [alias]
+    # Log visual completo
     lg = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+    
+    # Log compacto
     ls = log --oneline --decorate
+    
+    # Log con stats
     ll = log --stat --abbrev-commit
+    
+    # Último commit
     last = log -1 HEAD --stat
-    unpushed = log origin/main..HEAD --oneline
+    
+    # Commits no pusheados
+    unpushed = log @{u}..HEAD --oneline
+    
+    # Commits no traidos del remoto
+    unpulled = log HEAD..@{u} --oneline
+    
+    # Historial de archivo
+    filelog = log --follow -p --
+    
+    # Contribuciones por autor
+    contributors = shortlog --summary --numbered --email
+    
+    # Grafo simple
+    tree = log --oneline --graph --decorate --all
+    
+    # Ver qué cambió hoy
+    today = log --since="midnight" --oneline --author="Tu Nombre"
+    
+    # Buscar en commits
+    search = log --all --grep
+```
+
+**Troubleshooting y problemas comunes:**
+
+```bash
+# ============================================
+# PROBLEMAS Y SOLUCIONES
+# ============================================
+
+# Problema 1: Log muy largo, no puedo salir
+# → Presiona 'q' para salir del pager (less)
+
+# Problema 2: No veo colores
+git config --global color.ui auto
+
+# Problema 3: Log de archivo no muestra nada
+git log --all --full-history -- archivo.txt
+# → Busca en todas las ramas e historia completa
+
+# Problema 4: Quiero log sin paginación
+git --no-pager log
+# o:
+git log | cat
+
+# Problema 5: Log muy lento en repo grande
+git log --oneline -100  # Limita resultados
+git log --since="1 month ago"  # Limita rango
+
+# Problema 6: No encuentro commit con mensaje específico
+git log --all --grep="texto" -i
+# → Busca case-insensitive en todas las ramas
+
+# Problema 7: Quiero exportar log a archivo
+git log --pretty=format:"%h %an %ad %s" --date=short > log.txt
+
+# Problema 8: No sé qué commits faltan traer
+git fetch
+git log HEAD..origin/main --oneline
+
+# Problema 9: Grafo muy complejo, no entiendo
+git log --oneline --graph --first-parent
+# → Solo primera línea (más simple)
+
+# Problema 10: Busco commit pero no recuerdo rama
+git log --all -S"texto_unico" --source
+# → Muestra en qué rama está cada commit
+```
+
+**Casos de uso del mundo real:**
+
+```bash
+# ============================================
+# ESCENARIOS REALES
+# ============================================
+
+# 1. Code review de PR
+git log main..feature-branch --oneline --no-merges
+
+# 2. ¿Qué cambió en último release?
+git log v1.9.0..v2.0.0 --oneline
+
+# 3. Auditoría de seguridad
+git log -S"password" --all -p
+
+# 4. ¿Quién rompió el build?
+git log --since="yesterday" --until="now" --oneline
+
+# 5. Generar CHANGELOG
+git log v1.0.0..HEAD --pretty=format:"- %s (%h)" --no-merges
+
+# 6. Encontrar cuándo se introdujo bug
+git log -S"bug_code" -p
+
+# 7. Ver trabajo de la semana pasada
+git log --author="$(git config user.name)" --since="1 week ago" --oneline
+
+# 8. Comparar actividad entre ramas
+git log develop --not main --oneline
+
+# 9. Listar todos los merges de feature branches
+git log --merges --grep="Merge branch 'feature" --oneline
+
+# 10. Verificar que commit está en producción
+git log origin/production --oneline | grep abc123
 ```
 
 **Mejores prácticas:**
@@ -1152,11 +1715,20 @@ git show HEAD~3
 ```bash
 ✓ Usa --oneline para overview rápido
 ✓ Usa --graph para entender merges
-✓ Usa --all para ver TODO
+✓ Usa --all para ver TODO el repositorio
+✓ Usa --follow para archivos renombrados
+✓ Usa -S o -G para buscar código
+✓ Usa --not para exclusiones complejas
 ✓ Crea alias para comandos frecuentes
+✓ Limita resultados con -n en repos grandes
+✓ Usa --stat para resumen de cambios
+✓ Combina --since y --until para rangos específicos
 
 ✗ No corras git log sin límites en repos gigantes
 ✗ No olvides --follow para archivos renombrados
+✗ No uses --all si solo necesitas rama actual
+✗ No ignores --no-merges para análisis de features
+✗ No uses formato complejo sin guardarlo en alias
 ```
 
 ---
@@ -1165,67 +1737,784 @@ git show HEAD~3
 [⬆️ Top](#tabla-de-contenidos)
 
 **¿Qué hace?**
-Crea, lista, renombra y elimina ramas (branches).
+Crea, lista, renombra, elimina y gestiona ramas (branches). Las ramas en Git son extremadamente ligeras: solo punteros a commits, no copias de archivos.
 
 **Funcionamiento interno:**
 ```
 Crear rama:
-1. Obtiene hash del commit actual
-2. Crea archivo .git/refs/heads/rama con el hash
-→ Solo 41 bytes, instantáneo
+1. Obtiene hash del commit actual (HEAD)
+2. Crea archivo .git/refs/heads/nombre-rama con el hash
+3. Tamaño: Solo 41 bytes (hash SHA-1 + newline)
+4. Tiempo: Instantáneo (milisegundos)
+
+Eliminar rama:
+1. Verifica si está mergeada (con -d)
+2. Elimina archivo .git/refs/heads/nombre-rama
+3. No toca commits (quedan en reflog si es necesario recuperar)
+
+Cambiar entre ramas:
+1. Lee hash del commit de la rama destino
+2. Actualiza working directory con ese tree object
+3. Actualiza .git/HEAD para apuntar a la nueva rama
+4. Actualiza .git/index (staging area)
 ```
 
-**Uso práctico:**
+**Uso práctico - Creación de ramas:**
 
 ```bash
-# Crear rama
+# ============================================
+# CREAR RAMAS
+# ============================================
+
+# 1. Crear rama sin cambiar a ella
 git branch feature-x
+# → Crea rama apuntando a HEAD actual
+# → Te quedas en la rama actual
 
-# Crear y cambiar
+# 2. Crear rama desde commit específico
+git branch feature-x abc123
+git branch hotfix v1.2.3
+# → Crea rama apuntando al commit especificado
+
+# 3. Crear y cambiar a rama (método clásico)
 git checkout -b feature-x
-# o: git switch -c feature-x
+# → Crea rama Y cambia a ella
+# → Equivalente a: git branch feature-x && git checkout feature-x
 
-# Listar ramas
-git branch
-git branch -a  # Incluye remotas
-git branch -v  # Con último commit
+# 4. Crear y cambiar a rama (método moderno)
+git switch -c feature-x
+# → Igual que checkout -b pero más claro
+# → Comando específico para ramas (Git 2.23+)
 
-# Ver ramas mergeadas/no mergeadas
-git branch --merged
-git branch --no-merged
+# 5. Crear rama desde otra rama (no desde HEAD)
+git branch feature-y feature-x
+# → Crea feature-y apuntando donde está feature-x
 
-# Eliminar rama
-git branch -d feature-x  # Safe delete
-git branch -D feature-x  # Force delete
+# 6. Crear rama desde remota
+git branch feature-x origin/feature-x
+git checkout -b feature-x origin/feature-x
+# → Crea rama local basada en remota
 
-# Renombrar rama
-git branch -m nuevo-nombre
-git branch -m viejo nuevo
+# 7. Crear rama con tracking automático
+git checkout -b feature-x --track origin/feature-x
+git switch -c feature-x --track origin/feature-x
+# → Configura upstream automáticamente
+# → git push/pull sin argumentos funcionarán
 
-# Mover rama a otro commit
-git branch -f feature-x abc123
+# 8. Crear rama "huérfana" (sin historia)
+git checkout --orphan nueva-rama
+# → Crea rama sin commits previos
+# → Útil para gh-pages, documentación separada
+# → Working directory mantiene archivos (debes limpiar)
+git rm -rf .  # Limpiar si quieres empezar vacío
 ```
 
-**Estrategias de branching:**
+**Uso práctico - Listar y ver ramas:**
 
 ```bash
-# Feature Branch Workflow
-main
- └─ feature/user-auth
- └─ feature/payment
- └─ bugfix/login-error
+# ============================================
+# LISTAR RAMAS
+# ============================================
 
-# Git Flow
-main (producción)
- ├─ develop (integración)
- │   ├─ feature/x
- │   └─ feature/y
- └─ hotfix/critical
+# 1. Listar ramas locales
+git branch
+# → Muestra rama actual con *
+# → Solo ramas locales
 
-# GitHub Flow (simple)
-main
- ├─ feature-x
- └─ bugfix-y
+# 2. Listar todas las ramas (local + remoto)
+git branch -a
+# o: git branch --all
+# → Locales + remotes/origin/*
+# → Muy útil para ver qué hay en remoto
+
+# 3. Listar solo ramas remotas
+git branch -r
+# o: git branch --remotes
+# → Solo origin/main, origin/develop, etc.
+
+# 4. Listar con último commit
+git branch -v
+# o: git branch --verbose
+# Formato: nombre hash mensaje
+# ejemplo:
+#   main     abc123 Last commit message
+# * feature  def456 Work in progress
+
+# 5. Listar con información de tracking
+git branch -vv
+# Formato: nombre hash [upstream: ahead N, behind M] mensaje
+# ejemplo:
+#   main     abc123 [origin/main] Last commit
+# * feature  def456 [origin/feature: ahead 2] WIP
+
+# 6. Listar con más detalles (commit y autor)
+git branch -v --abbrev-commit
+git branch -vv --format="%(refname:short) %(objectname:short) %(upstream:track) %(committerdate:relative)"
+
+# 7. Listar ramas mergeadas a rama actual
+git branch --merged
+# → Muestra ramas ya integradas en HEAD
+# → Candidatas para eliminación
+# → Solo muestra si merge fue completo
+
+git branch --merged main
+# → Ramas mergeadas a main (no necesariamente a HEAD)
+
+# 8. Listar ramas NO mergeadas
+git branch --no-merged
+# → Ramas con commits únicos aún
+# → Trabajo pendiente de integrar
+
+git branch --no-merged main
+# → Ramas no mergeadas a main
+
+# 9. Listar ramas con patrón
+git branch --list "feature/*"
+git branch --list "*fix*"
+# → Filtrado por patrón wildcard
+
+# 10. Listar ramas que contienen commit
+git branch --contains abc123
+git branch --contains v1.0.0
+# → Ramas que incluyen ese commit en su historia
+
+# 11. Listar ramas que NO contienen commit
+git branch --no-contains abc123
+# → Ramas que no tienen ese commit
+
+# 12. Ordenar por diferentes criterios
+git branch --sort=-committerdate
+# → Más recientemente modificadas primero
+git branch --sort=authordate
+git branch --sort=objectsize
+```
+
+**Uso práctico - Eliminar ramas:**
+
+```bash
+# ============================================
+# ELIMINAR RAMAS
+# ============================================
+
+# 1. Eliminar rama local (safe)
+git branch -d feature-x
+# → Solo elimina si está mergeada
+# → Previene pérdida de trabajo
+# → Error si tiene commits únicos
+
+# 2. Eliminar rama local (force)
+git branch -D feature-x
+# → Elimina aunque no esté mergeada
+# → ⚠️ Puede perder trabajo
+# → Útil para abandonar experimentos
+
+# 3. Eliminar rama remota
+git push origin --delete feature-x
+# o: git push origin :feature-x (sintaxis vieja)
+# → Elimina rama en GitHub/GitLab/etc
+# → Referencias locales quedan (limpia con fetch --prune)
+
+# 4. Eliminar múltiples ramas locales
+git branch -d rama1 rama2 rama3
+# → Elimina varias a la vez
+
+# 5. Eliminar todas las ramas mergeadas
+git branch --merged main | grep -v "^\*" | grep -v "main" | xargs git branch -d
+# → Limpieza masiva de ramas ya integradas
+# → Excluye main y rama actual (*)
+
+# 6. Eliminar ramas locales cuyo remoto ya no existe
+git fetch --prune
+git branch -vv | grep ': gone]' | awk '{print $1}' | xargs git branch -D
+# → Limpia "ramas fantasma"
+# → Útil tras eliminación de ramas remotas
+
+# 7. Forzar eliminación sin verificar merge
+git branch -D feature-x feature-y hotfix-z
+# → Borra múltiples sin verificación
+```
+
+**Uso práctico - Renombrar ramas:**
+
+```bash
+# ============================================
+# RENOMBRAR RAMAS
+# ============================================
+
+# 1. Renombrar rama actual
+git branch -m nuevo-nombre
+# → Estás en la rama, la renombras
+
+# 2. Renombrar otra rama (no actual)
+git branch -m viejo-nombre nuevo-nombre
+# → Renombras desde fuera de ella
+
+# 3. Renombrar y actualizar remoto
+git branch -m old-name new-name  # Renombrar local
+git push origin :old-name        # Eliminar remoto viejo
+git push origin new-name         # Subir nuevo nombre
+git push origin -u new-name      # Configurar tracking
+
+# 4. Forzar renombrado (sobrescribe si existe)
+git branch -M nuevo-nombre
+# → Como -m pero fuerza sobrescritura
+
+# 5. Renombrar main a master (o viceversa)
+git branch -m master main
+git push -u origin main
+git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
+```
+
+**Uso práctico - Gestión avanzada:**
+
+```bash
+# ============================================
+# OPERACIONES AVANZADAS
+# ============================================
+
+# 1. Mover rama a otro commit (sin checkout)
+git branch -f feature-x abc123
+# → Mueve puntero de feature-x al commit abc123
+# → No necesitas estar en feature-x
+# → ⚠️ Reescribe historia si mueves atrás
+
+# 2. Copiar rama
+git branch nueva-copia rama-original
+# → Crea nueva-copia apuntando donde rama-original
+
+# 3. Configurar upstream de rama existente
+git branch -u origin/feature-x
+# o: git branch --set-upstream-to=origin/feature-x
+# → Configura tracking para push/pull
+# → Útil si creaste rama local sin -track
+
+# 4. Ver upstream configurado
+git branch -vv
+# → Muestra [origin/rama] si tiene upstream
+
+# 5. Quitar upstream
+git branch --unset-upstream
+# → Elimina configuración de tracking
+# → Deberás especificar remoto en push/pull
+
+# 6. Editar descripción de rama
+git branch --edit-description
+# → Abre editor para añadir descripción
+# → Útil para documentar propósito de rama
+
+git branch --edit-description feature-x
+# → Edita descripción de rama específica
+
+# 7. Ver descripción de rama
+git config branch.feature-x.description
+
+# 8. Crear rama desde stash
+git stash branch nueva-rama stash@{0}
+# → Crea rama desde punto donde hiciste stash
+# → Aplica cambios del stash
+# → Elimina stash
+
+# 9. Listar ramas con formato personalizado
+git branch --format="%(refname:short) - %(authorname) - %(committerdate:short)"
+# → Output personalizado
+# → Ver más abajo sección completa de FORMAT
+
+# 10. Ver ramas ordenadas por actividad
+git for-each-ref --sort=-committerdate refs/heads/ --format='%(refname:short) %(committerdate:relative)'
+# → Muy útil para ver qué ramas están activas
+```
+
+**Formato personalizado con --format (Completo):**
+
+> 📖 **NOTA:** Para una referencia completa de todos los placeholders disponibles, 
+> formatos avanzados, condicionales y ejemplos con otros comandos (log, for-each-ref, 
+> show-ref, etc.), consulta la **[Sección 22: Referencias y Placeholders de Formato](#22-referencias-y-placeholders-de-formato)**.
+
+```bash
+# ============================================
+# GIT BRANCH --FORMAT (PLACEHOLDERS COMPLETOS)
+# ============================================
+
+# git branch también acepta placeholders como git for-each-ref
+# Ver sección 22 para lista completa de placeholders disponibles
+
+# PLACEHOLDERS PRINCIPALES:
+
+# Referencia
+%(refname)              # refs/heads/main
+%(refname:short)        # main
+%(refname:lstrip=2)     # main (elimina "refs/heads/")
+
+# Objeto
+%(objectname)           # Hash completo SHA-1
+%(objectname:short)     # Hash abreviado (7 chars)
+%(objectname:short=10)  # Hash abreviado (10 chars)
+
+# Commit info
+%(tree)                 # Hash del árbol
+%(parent)               # Hash(es) del padre
+%(subject)              # Primera línea mensaje
+%(body)                 # Cuerpo del mensaje
+%(contents)             # Mensaje completo
+
+# Autor
+%(authorname)           # Nombre del autor
+%(authoremail)          # Email del autor
+%(authordate)           # Fecha del autor
+%(authordate:relative)  # "2 days ago"
+%(authordate:short)     # "2024-02-13"
+%(authordate:iso)       # ISO 8601
+
+# Committer
+%(committername)        # Nombre del committer
+%(committeremail)       # Email del committer
+%(committerdate)        # Fecha del committer
+%(committerdate:relative)
+%(committerdate:short)
+%(committerdate:iso)
+
+# Tracking (upstream)
+%(upstream)             # refs/remotes/origin/main
+%(upstream:short)       # origin/main
+%(upstream:track)       # [ahead 2, behind 1]
+%(upstream:trackshort)  # <> (diverged), > (ahead), < (behind), = (up to date)
+%(upstream:remotename)  # origin
+%(upstream:remoteref)   # refs/heads/main
+
+# Estado
+%(HEAD)                 # '*' si es rama actual, ' ' si no
+%(color:...)            # Aplicar color
+%(if)%(then)%(else)%(end) # Condicionales
+
+
+# ============================================
+# EJEMPLOS PRÁCTICOS DE FORMATO
+# ============================================
+
+# 1. Lista simple con hash
+git branch --format="%(refname:short) %(objectname:short)"
+# Salida:
+# main a1b2c3d
+# develop e4f5g6h
+# feature/login i7j8k9l
+
+# 2. Con información de tracking
+git branch --format="%(refname:short) → %(upstream:short) %(upstream:track)"
+# Salida:
+# main → origin/main [up to date]
+# develop → origin/develop [ahead 2, behind 1]
+# feature/login →  
+
+# 3. Con tracking abreviado (símbolos)
+git branch --format="%(HEAD) %(refname:short) %(upstream:trackshort)"
+# Salida:
+# * main =     (actual, up to date)
+#   develop <> (diverged)
+#   feature >  (ahead)
+
+# 4. Con último commit y autor
+git branch --format="%(refname:short) | %(authorname) | %(committerdate:relative) | %(subject)"
+# Salida:
+# main | Juan Pérez | 2 days ago | Fix login bug
+# develop | María García | 1 week ago | Add feature X
+
+# 5. Con colores (visual)
+git branch --format="%(if)%(HEAD)%(then)%(color:green)* %(else)  %(end)%(color:yellow)%(refname:short)%(color:reset) %(upstream:trackshort)"
+# Salida coloreada:
+# * main >    (verde si actual)
+#   develop <  (amarillo)
+
+# 6. Tabla alineada
+git branch --format="%(align:20,left)%(refname:short)%(end) %(align:15,left)%(upstream:short)%(end) %(align:20,right)%(committerdate:short)%(end)"
+# Salida:
+# main                 origin/main     2024-02-13
+# develop              origin/develop  2024-02-12
+# feature/login                        2024-02-10
+
+# 7. Solo ramas sin upstream
+git branch --format="%(if)%(upstream)%(then)%(else)%(refname:short)%(end)" | grep -v '^$'
+# Salida:
+# feature/login
+# hotfix/temp
+
+# 8. Solo ramas con upstream (con estado)
+git branch --format="%(if)%(upstream)%(then)%(refname:short) → %(upstream:short) %(upstream:track)%(end)" | grep -v '^$'
+# Salida:
+# main → origin/main [up to date]
+# develop → origin/develop [ahead 2]
+
+# 9. Formato tipo GitHub
+git branch --format="%(color:bold yellow)%(refname:short)%(color:reset) %(color:dim)%(objectname:short)%(color:reset) %(subject)" --sort=-committerdate
+# Salida:
+# feature/new-ui a1b2c3d Add new dashboard
+# develop e4f5g6h Merge feature X
+# main i7j8k9l Hotfix security
+
+# 10. Información completa para revisión
+git branch --format="Rama: %(refname:short)
+  Hash: %(objectname:short)
+  Upstream: %(upstream:short)
+  Estado: %(upstream:track)
+  Último commit: %(subject)
+  Autor: %(authorname)
+  Fecha: %(committerdate:short)
+  ---"
+
+# 11. Solo ramas mergeadas con marca visual
+git branch --merged main --format="✓ %(refname:short) (merged)"
+
+# 12. Solo ramas NO mergeadas con marca visual
+git branch --no-merged main --format="✗ %(refname:short) (%(committerdate:relative))"
+# Salida:
+# ✗ feature/new-ui (2 days ago)
+# ✗ hotfix/urgent (5 hours ago)
+
+# 13. Export a CSV para análisis
+git branch --format="%(refname:short),%(objectname:short),%(authorname),%(authoremail),%(committerdate:short),%(subject)" > branches.csv
+
+# 14. Buscar ramas de un autor específico
+git branch --format="%(if:equals=Juan Pérez)%(authorname)%(then)%(refname:short) - %(subject)%(end)" | grep -v '^$'
+
+# 15. Ramas con commits recientes (últimos 7 días)
+git branch --format="%(if:newer=7.days.ago)%(committerdate)%(then)%(refname:short) - %(committerdate:relative)%(end)" | grep -v '^$'
+
+
+# ============================================
+# ORDENAMIENTO CON --sort
+# ============================================
+
+# Por fecha de commit (más recientes primero)
+git branch --sort=-committerdate --format="%(committerdate:short) %(refname:short)"
+
+# Por fecha de commit (más antiguos primero)
+git branch --sort=committerdate --format="%(committerdate:short) %(refname:short)"
+
+# Por nombre alfabético
+git branch --sort=refname
+
+# Por nombre alfabético inverso
+git branch --sort=-refname
+
+# Por fecha de autor
+git branch --sort=-authordate --format="%(authordate:short) %(refname:short) %(authorname)"
+
+# Múltiples criterios (fecha, luego nombre)
+git branch --sort=-committerdate --sort=refname
+
+
+# ============================================
+# FILTROS COMBINADOS
+# ============================================
+
+# Ramas remotas sin merge con formato
+git branch -r --no-merged main --format="%(refname:short) %(committerdate:relative)"
+
+# Ramas locales que contienen un commit
+git branch --contains abc123 --format="%(refname:short) ✓"
+
+# Ramas locales que NO contienen un commit
+git branch --no-contains abc123 --format="%(refname:short) ✗"
+
+# Ramas con patrón y formato
+git branch --list "feature/*" --format="%(refname:short) - %(subject)"
+
+
+# ============================================
+# CONDICIONALES AVANZADOS
+# ============================================
+
+# Mostrar solo si está ahead
+git branch --format="%(if:notequals=)%(upstream:track)%(then)%(refname:short) %(upstream:track)%(end)" | grep -v '^$'
+
+# Colorear según estado de tracking
+git branch --format="%(if)%(upstream:track)%(then)%(color:red)%(else)%(color:green)%(end)%(refname:short)%(color:reset) %(upstream:track)"
+
+# Marcar ramas sin upstream
+git branch --format="%(refname:short)%(if)%(upstream)%(then) [tracked]%(else) [NO UPSTREAM]%(end)"
+# Salida:
+# main [tracked]
+# feature/new [NO UPSTREAM]
+
+
+# ============================================
+# CASOS DE USO PRÁCTICOS
+# ============================================
+
+# 1. Encontrar ramas abandonadas (>3 meses sin commits)
+git branch --sort=-committerdate --format="%(committerdate:short) %(refname:short)" | tail -10
+
+# 2. Ver quién trabaja en qué
+git branch --format="%(authorname): %(refname:short)" --sort=authorname
+
+# 3. Estado de tracking de todas las ramas (dashboard)
+git branch --format="%(align:25,left)%(refname:short)%(end)%(if)%(upstream)%(then)→ %(upstream:short) %(upstream:trackshort)%(else)(sin tracking)%(end)"
+# Salida:
+# main                     → origin/main =
+# develop                  → origin/develop >
+# feature/login            (sin tracking)
+
+# 4. Ramas con commits pero sin push
+git branch --format="%(if)%(upstream:track)%(then)%(if:equals=[ahead ?)%(upstream:track)%(then)%(refname:short) tiene commits locales%(end)%(end)" | grep -v '^$'
+
+# 5. Generar comando para eliminar ramas mergeadas
+git branch --merged main --format="git branch -d %(refname:short)" | grep -v "main"
+# Salida (ejecutable):
+# git branch -d feature-old
+# git branch -d bugfix-123
+
+
+# ============================================
+# NOTA IMPORTANTE
+# ============================================
+# git branch --no-merged NO MUESTRA LA RAMA ACTUAL aunque no esté merged
+# Esto es comportamiento estándar de Git
+
+# Para verificar si tu rama actual está merged:
+git branch --contains HEAD main
+# o
+git merge-base --is-ancestor HEAD main && echo "Está merged" || echo "NO está merged"
+```
+
+**Estrategias de branching completas:**
+
+```bash
+# ============================================
+# FEATURE BRANCH WORKFLOW
+# ============================================
+# Estrategia: Una rama por feature, merge a main
+
+main (estable, deployable)
+ ├─ feature/user-authentication
+ ├─ feature/payment-integration  
+ ├─ feature/dashboard-redesign
+ ├─ bugfix/login-timeout
+ └─ hotfix/security-patch
+
+Workflow:
+git checkout main
+git pull origin main
+git checkout -b feature/nueva-feature
+# ... desarrollo ...
+git push -u origin feature/nueva-feature
+# PR en GitHub/GitLab
+# Tras aprobación:
+git checkout main
+git merge --no-ff feature/nueva-feature
+git push origin main
+git branch -d feature/nueva-feature
+git push origin --delete feature/nueva-feature
+
+# ============================================
+# GIT FLOW
+# ============================================
+# Estrategia: Ramas de largo plazo + features temporales
+
+main (producción, solo releases)
+ └─ hotfix/critical-bug → merge a main y develop
+ 
+develop (integración, siguiente release)
+ ├─ feature/feature-a → merge a develop
+ ├─ feature/feature-b → merge a develop
+ └─ release/v2.0.0 → merge a main y develop
+
+Workflow nuevas features:
+git checkout develop
+git checkout -b feature/nueva-feature
+# ... desarrollo ...
+git checkout develop
+git merge --no-ff feature/nueva-feature
+git branch -d feature/nueva-feature
+
+Workflow releases:
+git checkout -b release/v1.5.0 develop
+# ... bug fixes, versioning ...
+git checkout main
+git merge --no-ff release/v1.5.0
+git tag -a v1.5.0
+git checkout develop
+git merge --no-ff release/v1.5.0
+git branch -d release/v1.5.0
+
+Workflow hotfixes:
+git checkout -b hotfix/critical main
+# ... fix urgente ...
+git checkout main
+git merge --no-ff hotfix/critical
+git tag -a v1.5.1
+git checkout develop
+git merge --no-ff hotfix/critical
+git branch -d hotfix/critical
+
+# ============================================
+# GITHUB FLOW (SIMPLE)
+# ============================================
+# Estrategia: Solo main + ramas temporales, deploy continuo
+
+main (siempre deployable)
+ ├─ add-oauth-support
+ ├─ fix-memory-leak
+ └─ update-dependencies
+
+Workflow:
+git checkout main
+git pull origin main
+git checkout -b descriptive-branch-name
+# ... commits ...
+git push -u origin descriptive-branch-name
+# Abrir Pull Request
+# CI/CD ejecuta tests
+# Code review
+# Merge a main
+# Auto-deploy a producción
+# Eliminar rama
+
+# ============================================
+# TRUNK-BASED DEVELOPMENT
+# ============================================
+# Estrategia: Ramas de vida muy corta (<1 día), main siempre estable
+
+main (trunk, siempre estable)
+ ├─ short-lived-branch-1 (< 1 día)
+ └─ short-lived-branch-2 (< 1 día)
+
+Principios:
+- Ramas viven máximo 1 día
+- Commits pequeños y frecuentes
+- Feature flags para features incompletas
+- CI/CD muy robusto
+
+Workflow:
+git checkout main
+git pull origin main
+git checkout -b quick-fix
+# ... cambio pequeño ...
+git push -u origin quick-fix
+# PR rápido, merge mismo día
+git checkout main
+git pull origin main
+git branch -d quick-fix
+```
+
+**Convenciones de nombres de ramas:**
+
+```bash
+# ============================================
+# NOMENCLATURA RECOMENDADA
+# ============================================
+
+# Por tipo:
+feature/user-authentication
+feature/payment-gateway
+bugfix/login-error
+hotfix/security-vulnerability
+release/v1.5.0
+docs/update-readme
+test/add-integration-tests
+refactor/optimize-queries
+chore/update-dependencies
+
+# Por ticket/issue:
+feature/JIRA-123-add-oauth
+bugfix/GH-456-fix-memory-leak
+hotfix/PROD-789-critical-fix
+
+# Por desarrollador (en equipos pequeños):
+john/new-dashboard
+maria/fix-api
+
+# Convenciones:
+✓ Usa minúsculas
+✓ Usa guiones (no underscores)
+✓ Sé descriptivo pero conciso
+✓ Incluye tipo de cambio
+✓ Incluye referencia a ticket si existe
+
+✗ No uses espacios
+✗ No uses caracteres especiales (/, - solo)
+✗ No uses nombres ambiguos ("fix", "test", "branch")
+✗ No uses fechas como única identificación
+```
+
+**Troubleshooting y problemas comunes:**
+
+```bash
+# ============================================
+# PROBLEMAS COMUNES
+# ============================================
+
+# Problema 1: No puedo cambiar de rama (cambios sin commitear)
+git checkout otra-rama
+# error: Your local changes would be overwritten
+
+Solución A (commitear):
+git add .
+git commit -m "WIP: trabajo en progreso"
+git checkout otra-rama
+
+Solución B (stash):
+git stash
+git checkout otra-rama
+# ... trabajo ...
+git checkout rama-original
+git stash pop
+
+Solución C (forzar, ⚠️ pierdes cambios):
+git checkout -f otra-rama
+
+# Problema 2: Borré rama por error
+git reflog
+# Encuentra el commit donde estaba la rama
+git branch rama-recuperada abc123
+# o:
+git checkout -b rama-recuperada abc123
+
+# Problema 3: Rama no se elimina (no mergeada)
+git branch -d feature-x
+# error: branch not fully merged
+
+Verificar:
+git branch --no-merged
+git log main..feature-x --oneline
+
+Si realmente quieres borrar:
+git branch -D feature-x
+
+# Problema 4: Rama local dice "gone" en tracking
+git branch -vv
+# feature-x abc123 [origin/feature-x: gone] WIP
+
+Causa: Rama remota fue eliminada
+Solución:
+git branch -D feature-x  # Si no necesitas cambios
+# o
+git branch --unset-upstream  # Quita tracking, mantén rama local
+
+# Problema 5: Demasiadas ramas, repo desorganizado
+# Listar ramas inactivas (más de 6 meses):
+git for-each-ref --sort=-committerdate refs/heads/ \
+  --format='%(refname:short) %(committerdate:relative)' | \
+  tail -20
+
+# Eliminar ramas mergeadas:
+git branch --merged main | grep -v "main" | xargs git branch -d
+
+# Problema 6: Rama con nombre incorrecto ya pusheada
+git branch -m old-name new-name
+git push origin :old-name new-name
+git push origin -u new-name
+
+# Problema 7: Quiero ver rama antigua sin afectar HEAD
+git show rama-antigua:archivo.txt
+git log rama-antigua
+git diff main..rama-antigua
+# Sin hacer checkout
+
+# Problema 8: No sé en qué rama estoy
+git branch
+# o
+git rev-parse --abbrev-ref HEAD
+# o
+git status | head -1
 ```
 
 **Mejores prácticas:**
@@ -1247,69 +2536,243 @@ main
 [⬆️ Top](#tabla-de-contenidos)
 
 **¿Qué hace?**
-Cambia de rama o restaura archivos del working directory.
+Cambia de rama, navega por commits históricos, o restaura archivos del working directory. Es uno de los comandos más versátiles (y confusos) de Git, por eso se dividió en `git switch` y `git restore` en versiones modernas.
 
 **Funcionamiento interno:**
 ```
-1. Obtiene hash del commit de la rama
-2. Lee el tree object
-3. Actualiza working directory
-4. Actualiza HEAD
-5. Actualiza .git/index
+Al cambiar de rama:
+1. Verifica que no haya conflictos con working directory
+2. Lee hash del commit de la rama destino desde .git/refs/heads/rama
+3. Lee tree object del commit destino
+4. Compara tree actual con tree destino
+5. Actualiza archivos en working directory (solo los diferentes)
+6. Actualiza .git/index (staging area)
+7. Actualiza .git/HEAD → ref: refs/heads/rama-destino
+8. Si hay conflictos, aborta y muestra errores
+
+Al checkout de archivo:
+1. Lee archivo desde tree object del commit especificado
+2. Sobrescribe archivo en working directory
+3. Actualiza staging area con esa versión
+4. NO cambia HEAD
+
+Al checkout de commit (detached HEAD):
+1. Similar a cambio de rama
+2. Pero HEAD apunta directamente a commit (no a rama)
+3. .git/HEAD contiene hash en vez de ref
+4. Commits nuevos quedan "huérfanos" al cambiar
 ```
 
 **git checkout vs git switch vs git restore:**
 
 ```bash
-# CHECKOUT (multiuso, confuso)
-git checkout main          # Cambiar rama
-git checkout abc123        # Detached HEAD
-git checkout -- file.txt   # Descartar cambios
+# ============================================
+# CHECKOUT (Multiuso, confuso - comando legacy)
+# ============================================
+git checkout main               # Cambiar de rama
+git checkout -b nueva           # Crear y cambiar
+git checkout abc123             # Ir a commit (detached HEAD)
+git checkout -- file.txt        # Descartar cambios de archivo
+git checkout abc123 file.txt    # Restaurar archivo desde commit
+git checkout tags/v1.0.0        # Checkout de tag
 
-# SWITCH (solo ramas, Git 2.23+)
-git switch main
-git switch -c nueva
-git switch -
+# Problema: ¿checkout cambia rama o restaura archivo?
+# → Sintaxis ambigua, fácil confundirse
 
-# RESTORE (solo archivos, Git 2.23+)
-git restore file.txt
-git restore --staged file.txt
-git restore --source=abc123 file.txt
+# ============================================
+# SWITCH (Solo ramas, Git 2.23+ - RECOMENDADO)
+# ============================================
+git switch main                 # Cambiar rama
+git switch -c nueva             # Crear y cambiar
+git switch -                    # Volver a rama anterior
+git switch --detach abc123      # Detached HEAD explícito
 
-RECOMENDACIÓN: Usa switch para ramas, restore para archivos
+# Ventaja: Propósito claro, menos errores
+
+# ============================================
+# RESTORE (Solo archivos, Git 2.23+ - RECOMENDADO)
+# ============================================
+git restore file.txt                     # Descartar cambios (desde index)
+git restore --staged file.txt            # Unstage archivo
+git restore --source=abc123 file.txt     # Restaurar desde commit
+git restore --source=HEAD~3 file.txt     # Restaurar desde ancestro
+
+# Ventaja: Semántica clara, sin confusión con ramas
+
+# ============================================
+# RECOMENDACIÓN MODERNA
+# ============================================
+✓ git switch → Para cambiar de rama
+✓ git restore → Para restaurar archivos
+✗ git checkout → Solo si usas Git < 2.23 o scripts legacy
 ```
 
-**Uso práctico - git switch:**
+**Uso práctico - git switch (ramas):**
 
 ```bash
-# Cambiar a rama
+# ============================================
+# CAMBIAR ENTRE RAMAS
+# ============================================
+
+# 1. Cambiar a rama existente
 git switch main
+git switch feature-x
 
-# Crear y cambiar
-git switch -c feature-x
+# 2. Crear rama nueva y cambiar a ella
+git switch -c nueva-rama
 
-# Volver a rama anterior
+# 3. Crear rama desde commit específico
+git switch -c hotfix abc123
+git switch -c bugfix HEAD~3
+
+# 4. Volver a rama anterior
 git switch -
+# → Alterna entre dos ramas rápidamente
 
-# Forzar cambio
+# 5. Cambiar con tracking automático
+git switch --track origin/feature-x
+
+# 6. Forzar cambio (descarta cambios locales)
 git switch -f otra-rama
+
+# 7. Cambiar con merge de cambios locales
+git switch -m otra-rama
 ```
 
 **Detached HEAD:**
 
 ```bash
-# Entras con:
+# ¿Qué es Detached HEAD?
+# → HEAD apunta directamente a commit (no a rama)
+# → Commits nuevos quedan "huérfanos"
+# → Útil para inspección, no para desarrollo
+
+# Entrar en Detached HEAD:
 git checkout abc123
+git switch --detach abc123
 git checkout v1.0.0
 
-# ¿Por qué?
-✓ Inspeccionar commits viejos
-✓ Probar código de commit específico
+# ¿Por qué usarlo?
+✓ Inspeccionar código antiguo
+✓ Probar build de versión específica
+✓ Reproducir bug histórico
+✓ Auditar cambios
+✗ NO para desarrollo (commits se pierden)
 
-# Salir:
-git checkout main
-# O crear rama:
-git switch -c nueva-rama
+# Salir de Detached HEAD:
+git switch main              # Vuelve a rama
+git switch -c nueva-rama     # Convierte trabajo en rama
+
+# Ver si estás en Detached HEAD:
+git branch
+# * (HEAD detached at abc123)
+```
+
+**Uso práctico - git restore (archivos):**
+
+```bash
+# 1. Descartar cambios en working directory
+git restore file.txt
+
+# 2. Descartar todos los cambios
+git restore .
+
+# 3. Unstage archivo (quitar de staging)
+git restore --staged file.txt
+
+# 4. Unstage y descartar cambios
+git restore --staged --worktree file.txt
+
+# 5. Restaurar desde commit específico
+git restore --source=abc123 file.txt
+git restore --source=HEAD~3 file.txt
+
+# 6. Restaurar archivo borrado
+git restore deleted-file.txt
+
+# 7. Restaurar con patrón
+git restore '*.js'
+git restore 'src/**/*.txt'
+```
+
+**Uso práctico - git checkout (legacy):**
+
+```bash
+# Descartar cambios
+git checkout -- file.txt
+git checkout -- .
+
+# Restaurar desde commit
+git checkout abc123 -- file.txt
+git checkout HEAD~3 -- file.txt
+
+# Restaurar desde otra rama
+git checkout main -- config.txt
+git checkout feature-x -- src/utils.js
+
+# PROBLEMA con checkout:
+git checkout rama           # Cambia rama
+git checkout -- rama        # Restaura archivo llamado "rama"
+# → Ambigüedad confusa
+```
+
+**Casos de uso avanzados:**
+
+```bash
+# Caso 1: Olvidé cambiar de rama antes de trabajar
+git stash
+git switch feature
+git stash pop
+# o:
+git switch -m feature
+
+# Caso 2: Quiero archivo de otra rama sin cambiar
+git checkout feature -- src/lib.js
+
+# Caso 3: Explorar bug histórico
+git log --oneline | grep "bug aparece"
+git switch --detach abc123
+npm test
+git switch main
+
+# Caso 4: Recuperar archivo borrado hace commits
+git log --oneline --all --full-history -- deleted-file.txt
+git restore --source=abc123 -- deleted-file.txt
+
+# Caso 5: Crear hotfix desde tag de producción
+git switch -c hotfix/critical v1.2.3
+```
+
+**Troubleshooting:**
+
+```bash
+# Problema 1: No puedo cambiar (cambios sin commitear)
+Solución A: Commitear
+git add .
+git commit -m "WIP"
+
+Solución B: Stash
+git stash
+git switch otra-rama
+
+Solución C: Switch con merge
+git switch -m otra-rama
+
+Solución D: Forzar (⚠️ pierdes cambios)
+git switch -f otra-rama
+
+# Problema 2: Hice commits en Detached HEAD
+git reflog
+git switch -c rescue-branch 123xyz
+
+# Problema 3: Archivo y rama con mismo nombre
+git switch test          # Definitivamente rama
+git restore test         # Definitivamente archivo
+git checkout -- test     # Fuerza archivo (legacy)
+
+# Problema 4: Cambié de rama y perdí trabajo
+git reflog
+git switch -c recuperar HEAD@{1}
 ```
 
 **Mejores prácticas:**
@@ -1319,9 +2782,13 @@ git switch -c nueva-rama
 ✓ Usa git restore para archivos
 ✓ Commitea o stash antes de cambiar ramas
 ✓ Entiende detached HEAD antes de usarlo
+✓ Usa git switch -c para crear ramas
+✓ Anota hashes importantes en detached HEAD
 
-✗ Evita checkout sin especificar qué
+✗ Evita checkout ambiguo
 ✗ No trabajes en detached HEAD sin crear rama
+✗ No uses git checkout -- sin el "--"
+✗ No confundas switch (ramas) con restore (archivos)
 ```
 
 ---
@@ -3419,31 +4886,225 @@ git tag v1.0.0
 # Crear annotated tag (RECOMENDADO)
 git tag -a v1.0.0 -m "Release 1.0.0"
 
-# Listar tags
-git tag
-git tag -l "v1.*"
+# ============================================
+# LISTAR TAGS
+# ============================================
 
-# Ver detalles
+# Listar todos los tags
+git tag
+# → Orden alfabético por defecto
+
+# Listar con patrón
+git tag -l "v1.*"
+git tag -l "v*-beta*"
+git tag --list "release-*"
+
+# Listar tags que contienen un commit
+git tag --contains abc123
+git tag --contains HEAD
+
+# Listar tags que NO contienen un commit
+git tag --no-contains abc123
+
+# Listar tags merged/no-merged
+git tag --merged main
+git tag --no-merged main
+
+# Listar tags con anotaciones
+git tag -n
+git tag -n5  # Muestra hasta 5 líneas del mensaje
+
+# Ordenar tags
+git tag --sort=-creatordate      # Por fecha (más recientes primero)
+git tag --sort=version:refname   # Por versión semántica
+git tag --sort=refname           # Alfabético
+git tag --sort=-taggerdate       # Por fecha del tagger
+
+
+# ============================================
+# VER DETALLES DE TAGS
+# ============================================
+
+# Ver información completa
 git show v1.0.0
+# → Muestra tag object + commit + diff
+
+# Ver solo información del tag
+git show v1.0.0 --no-patch
+
+# Ver múltiples tags
+git show v1.0.0 v2.0.0
+
+# Ver commit al que apunta
+git rev-list -n 1 v1.0.0
+
+# Ver diferencia entre tags
+git diff v1.0.0..v2.0.0
+git log v1.0.0..v2.0.0 --oneline
+
+
+# ============================================
+# FORMATO PERSONALIZADO (--format)
+# ============================================
+
+> 📖 **NOTA:** Para una referencia completa de todos los placeholders disponibles, 
+> formatos avanzados, condicionales y ejemplos con otros comandos (log, branch, 
+> for-each-ref, show-ref, etc.), consulta la **[Sección 22: Referencias y Placeholders de Formato](#22-referencias-y-placeholders-de-formato)**.
+
+# git tag también acepta placeholders como git branch
+# Ver sección 22 para lista completa
+
+# Lista simple con hash
+git tag --format="%(refname:short) %(objectname:short)"
+# Salida:
+# v1.0.0 a1b2c3d
+# v1.1.0 e4f5g6h
+# v2.0.0 i7j8k9l
+
+# Con fecha y autor
+git tag --format="%(refname:short) | %(creatordate:short) | %(taggername)"
+# Salida:
+# v1.0.0 | 2024-01-15 | Juan Pérez
+# v1.1.0 | 2024-02-20 | María García
+
+# Con mensaje del tag
+git tag --format="%(refname:short) - %(contents:subject)"
+# Salida:
+# v1.0.0 - Initial release
+# v1.1.0 - Bug fixes and improvements
+
+# Con información completa
+git tag --format="Tag: %(refname:short)
+Commit: %(objectname:short)
+Fecha: %(creatordate:short)
+Autor: %(taggername) <%(taggeremail)>
+Mensaje: %(contents:subject)
+---"
+
+# Con colores
+git tag --format="%(color:green)%(refname:short)%(color:reset) (%(creatordate:relative))"
+
+# Ordenado por fecha con formato
+git tag --sort=-creatordate --format="%(creatordate:short) %(refname:short) - %(contents:subject)"
+
+# Export a CSV
+git tag --format="%(refname:short),%(objectname:short),%(taggername),%(creatordate:short),%(contents:subject)" > tags.csv
+
+
+# PLACEHOLDERS ESPECÍFICOS PARA TAGS:
+%(refname)              # refs/tags/v1.0.0
+%(refname:short)        # v1.0.0
+%(objectname)           # Hash del tag object
+%(objectname:short)     # Hash abreviado
+%(objecttype)           # "tag" o "commit"
+%(taggername)           # Nombre del tagger (solo annotated)
+%(taggeremail)          # Email del tagger
+%(taggerdate)           # Fecha del tag
+%(taggerdate:short)     # 2024-02-13
+%(taggerdate:relative)  # "2 days ago"
+%(creatordate)          # Fecha de creación (funciona con lightweight)
+%(contents)             # Mensaje completo del tag
+%(contents:subject)     # Primera línea del mensaje
+%(contents:body)        # Cuerpo del mensaje (sin subject)
+
+
+# ============================================
+# CREAR Y GESTIONAR TAGS
+# ============================================
+
+# Crear lightweight tag (simple puntero)
+git tag v1.0.0
+# → Solo referencia al commit, sin metadata
+
+# Crear annotated tag (RECOMENDADO para releases)
+git tag -a v1.0.0 -m "Release 1.0.0"
+# → Objeto completo: mensaje, autor, fecha, firma opcional
+
+# Tag con mensaje multilínea
+git tag -a v1.0.0 -m "Release 1.0.0
+
+Features:
+- User authentication
+- Payment integration
+- Dashboard redesign"
+
+# Tag en commit específico
+git tag -a v1.0.0 abc123 -m "Release 1.0.0"
+
+# Tag con editor
+git tag -a v1.0.0
+# → Abre editor para escribir mensaje extenso
 
 # Tag con firma GPG
-git tag -s v1.0.0 -m "Signed release"
+git tag -s v1.0.0 -m "Signed release 1.0.0"
+# → Crea tag firmado, verificable
 
-# Eliminar tag
+# Verificar firma de tag
+git tag -v v1.0.0
+git show --show-signature v1.0.0
+
+# Tag forzado (reemplazar existente)
+git tag -f v1.0.0
+git tag -af v1.0.0 -m "Release 1.0.0 (updated)"
+
+
+# ============================================
+# ELIMINAR TAGS
+# ============================================
+
+# Eliminar tag local
 git tag -d v1.0.0
 
-# Push de tags
-git push origin v1.0.0
-git push --tags
+# Eliminar múltiples tags locales
+git tag -d v1.0.0 v1.1.0 v2.0.0
 
 # Eliminar tag remoto
 git push origin --delete v1.0.0
+# o (sintaxis vieja):
+git push origin :refs/tags/v1.0.0
 
-# Checkout tag
+# Eliminar todos los tags locales (cuidado)
+git tag -l | xargs git tag -d
+
+
+# ============================================
+# PUSH DE TAGS
+# ============================================
+
+# Push de un tag específico
+git push origin v1.0.0
+
+# Push de todos los tags
+git push --tags
+# o:
+git push origin --tags
+
+# Push de tag y commit juntos
+git push origin main --follow-tags
+# → Pushea commit + tags anotados alcanzables
+
+# Configurar push automático de tags
+git config --global push.followTags true
+# → Pushea tags automáticamente con commits
+
+
+# ============================================
+# CHECKOUT Y RAMAS DESDE TAGS
+# ============================================
+
+# Checkout de tag (detached HEAD)
 git checkout v1.0.0
+# → Estás en estado "detached HEAD"
+# → Útil para revisar código de release
 
 # Crear rama desde tag
 git checkout -b hotfix-1.0.1 v1.0.0
+# → Crea rama apuntando al commit del tag
+# → Útil para hotfixes en versiones antiguas
+
+# Ver en qué ramas está un tag
+git branch --contains v1.0.0
+git branch -a --contains v1.0.0  # Incluye remotas
 ```
 
 **Semantic Versioning:**
@@ -3953,6 +5614,578 @@ git push --force-with-lease
 git fetch origin
 git reset --hard origin/main
 ```
+
+---
+
+## 22. Referencias y Placeholders de Formato
+[⬆️ Top](#tabla-de-contenidos)
+
+**¿Qué son?**
+Son variables internas que Git expone para personalizar la salida de comandos como `git log`, `git for-each-ref`, `git show-ref`, etc. Permiten crear formatos personalizados para scripts, informes y automatización.
+
+**¿Dónde se usan?**
+- En comandos con la opción `--format="..."`
+- En plantillas de hooks
+- En scripts para procesar información de Git
+- Para exportar datos estructurados
+
+> 📖 **REFERENCIAS CRUZADAS:** Esta sección proporciona la referencia completa de placeholders.
+> Para ejemplos específicos de cada comando, consulta:
+> - **[Sección 5: git log](#5-git-log---explorando-la-historia)** - Formatos personalizados con `--pretty`
+> - **[Sección 6: git branch](#6-git-branch---gestionando-líneas-de-desarrollo)** - Formato con `--format`
+> - **[Sección 17: git tag](#17-git-tag---marcando-versiones)** - Listar tags con formato personalizado
+
+---
+
+### Comandos que usan placeholders
+
+#### 1. git for-each-ref
+
+**Descripción:** Itera sobre todas las referencias (ramas, tags, etc.) y muestra información personalizada.
+
+**Sintaxis:**
+```bash
+git for-each-ref [<opciones>] [<patrón>]
+```
+
+**Placeholders principales:**
+
+```bash
+# Información de la referencia
+%(refname)           # Nombre completo: refs/heads/main
+%(refname:short)     # Nombre corto: main
+%(refname:lstrip=N)  # Elimina N componentes del inicio
+%(refname:rstrip=N)  # Elimina N componentes del final
+
+# Información del objeto
+%(objecttype)        # Tipo: commit, tag, tree, blob
+%(objectsize)        # Tamaño del objeto en bytes
+%(objectname)        # Hash SHA-1 completo
+%(objectname:short)  # Hash SHA-1 abreviado (7 caracteres)
+%(objectname:short=N) # Hash abreviado con N caracteres
+
+# Información del commit/tag
+%(tree)              # Hash del árbol
+%(parent)            # Hash(es) del/los padre(s)
+%(author)            # Autor completo: Nombre <email>
+%(authorname)        # Solo el nombre del autor
+%(authoremail)       # Solo el email del autor
+%(authordate)        # Fecha del autor (formato por defecto)
+%(committer)         # Committer completo: Nombre <email>
+%(committername)     # Solo el nombre del committer
+%(committeremail)    # Solo el email del committer
+%(committerdate)     # Fecha del committer
+%(subject)           # Primera línea del mensaje de commit
+%(body)              # Cuerpo del mensaje (sin el subject)
+%(contents)          # Mensaje completo (subject + body)
+
+# Información de tracking
+%(upstream)          # Rama remota asociada (upstream)
+%(upstream:short)    # Nombre corto de la rama remota
+%(upstream:track)    # Estado de tracking: [ahead N, behind M]
+%(upstream:trackshort) # Estado abreviado: >, <, <>, =
+
+# Información adicional
+%(HEAD)              # '*' si es la rama actual, ' ' si no
+%(color:...)         # Aplicar color
+%(align:...)         # Alinear texto
+%(if:...)%(then)%(else)%(end) # Condicionales
+```
+
+**Ejemplos prácticos:**
+
+```bash
+# 1. Listar todas las ramas con sus hashes
+git for-each-ref --format="%(refname:short) %(objectname:short)" refs/heads/
+
+# Salida:
+# main a1b2c3d
+# develop e4f5g6h
+# feature/login i7j8k9l
+
+# 2. Ramas con información de tracking
+git for-each-ref --format="%(refname:short) %(upstream:short) %(upstream:track)" refs/heads/
+
+# Salida:
+# main origin/main [ahead 2, behind 1]
+# develop origin/develop [ahead 5]
+# feature/login  
+
+# 3. Listar tags con fechas y autores
+git for-each-ref --format="%(refname:short) %(authordate:short) %(authorname)" refs/tags/
+
+# Salida:
+# v1.0.0 2024-01-15 Juan Pérez
+# v1.1.0 2024-02-20 María García
+
+# 4. Información completa formateada
+git for-each-ref --format="Rama: %(refname:short)
+  Último commit: %(objectname:short)
+  Autor: %(authorname)
+  Fecha: %(authordate:relative)
+  Mensaje: %(subject)
+  Tracking: %(upstream:track)
+" refs/heads/
+
+# 5. Con colores
+git for-each-ref --format="%(color:green)%(refname:short)%(color:reset) - %(subject)" refs/heads/
+
+# 6. Ordenar por fecha de commit
+git for-each-ref --sort=-committerdate --format="%(committerdate:short) %(refname:short)" refs/heads/
+
+# Salida:
+# 2024-03-01 feature/new-ui
+# 2024-02-28 develop
+# 2024-02-15 main
+
+# 7. Filtrar ramas remotas
+git for-each-ref --format="%(refname:short)" refs/remotes/origin/
+
+# 8. Ramas con ahead/behind visual
+git for-each-ref --format="%(refname:short) %(upstream:trackshort)" refs/heads/
+
+# Salida:
+# main <>    (divergente: tengo commits y hay remotos)
+# develop >  (ahead: tengo commits para subir)
+# feature <  (behind: hay commits remotos para traer)
+```
+
+**Opciones de formato de fecha:**
+
+```bash
+%(authordate:relative)    # "2 days ago"
+%(authordate:short)       # "2024-02-13"
+%(authordate:local)       # En zona horaria local
+%(authordate:iso)         # ISO 8601: "2024-02-13 14:30:45 +0100"
+%(authordate:iso-strict)  # ISO 8601 estricto
+%(authordate:rfc)         # RFC 2822
+%(authordate:raw)         # Unix timestamp + zona
+%(authordate:unix)        # Solo Unix timestamp
+%(authordate:format:...)  # Formato personalizado (strftime)
+```
+
+**Opciones de git for-each-ref:**
+
+```bash
+--count=<n>              # Limitar a n referencias
+--sort=<key>             # Ordenar por campo (- para descending)
+--format=<format>        # Formato de salida personalizado
+--shell                  # Formato para shell scripts
+--perl                   # Formato para Perl
+--python                 # Formato para Python
+--tcl                    # Formato para Tcl
+--points-at=<object>     # Solo refs que apuntan a objeto
+--merged[=<commit>]      # Solo refs fusionadas en commit
+--no-merged[=<commit>]   # Solo refs NO fusionadas en commit
+--contains[=<commit>]    # Solo refs que contienen commit
+--no-contains[=<commit>] # Solo refs que NO contienen commit
+```
+
+---
+
+#### 2. git log con --format
+
+**Placeholders para commits:**
+
+```bash
+# Hash del commit
+%H    # Hash completo (40 caracteres)
+%h    # Hash abreviado
+%T    # Hash del tree
+%t    # Hash del tree abreviado
+%P    # Hashes de los padres (completos)
+%p    # Hashes de los padres (abreviados)
+
+# Información del autor
+%an   # Nombre del autor
+%ae   # Email del autor
+%aE   # Email del autor (respetando .mailmap)
+%ad   # Fecha del autor (formato según --date)
+%aD   # Fecha del autor (RFC2822)
+%ar   # Fecha del autor (relativa)
+%at   # Fecha del autor (timestamp UNIX)
+%ai   # Fecha del autor (ISO 8601)
+%aI   # Fecha del autor (ISO 8601 estricto)
+
+# Información del committer
+%cn   # Nombre del committer
+%ce   # Email del committer
+%cE   # Email del committer (respetando .mailmap)
+%cd   # Fecha del committer
+%cD   # Fecha del committer (RFC2822)
+%cr   # Fecha del committer (relativa)
+%ct   # Fecha del committer (timestamp UNIX)
+%ci   # Fecha del committer (ISO 8601)
+%cI   # Fecha del committer (ISO 8601 estricto)
+
+# Referencias (ramas/tags)
+%d    # Nombres de ref (como --decorate)
+%D    # Nombres de ref sin los paréntesis
+%S    # Ref name (dada en la línea de comando)
+
+# Mensaje del commit
+%s    # Subject (primera línea)
+%f    # Subject sanitizado (para nombre de archivo)
+%b    # Body (resto del mensaje)
+%B    # Body raw (sin procesar)
+%N    # Notas del commit
+%GG   # Mensaje raw de verificación GPG
+%G?   # Estado de firma GPG
+%GS   # Nombre del firmante GPG
+%GK   # Key usada para firmar
+
+# Colores
+%Cred       # Cambiar a rojo
+%Cgreen     # Cambiar a verde
+%Cblue      # Cambiar a azul
+%Creset     # Reset color
+%C(...)     # Color específico (por nombre o código)
+
+# Otros
+%n    # Nueva línea
+%x00  # Byte nulo
+%%    # Literal '%'
+```
+
+**Ejemplos prácticos con git log:**
+
+```bash
+# 1. Log personalizado básico
+git log --format="%h - %an, %ar : %s"
+
+# Salida:
+# a1b2c3d - Juan Pérez, 2 days ago : Add login feature
+# e4f5g6h - María García, 1 week ago : Fix bug in payment
+
+# 2. Con colores
+git log --format="%C(yellow)%h%C(reset) - %C(cyan)%an%C(reset), %ar : %s"
+
+# 3. Formato completo estilo GitHub
+git log --format="%C(auto)%h%d %s %C(black)%C(bold)%cr by %an"
+
+# 4. Para exportar a CSV
+git log --format="%h,%an,%ae,%ad,%s" --date=short > commits.csv
+
+# 5. Con estadísticas
+git log --format="%h %an %s" --stat
+
+# 6. Commits con firma GPG
+git log --format="%h %s %G? %GS"
+# %G? muestra: G (buena), B (mala), U (sin verificar), N (sin firma)
+
+# 7. Log detallado para análisis
+git log --format="Commit: %H
+Autor: %an <%ae>
+Fecha: %ad
+Committer: %cn <%ce>
+Fecha Commit: %cd
+
+%s
+
+%b
+---"
+
+# 8. Log tipo GitHub/GitLab
+git log --graph --format="%C(yellow)%h%C(reset) %C(bold blue)%an%C(reset) %C(dim white)%ar%C(reset) %s %C(auto)%d"
+
+# 9. Solo hash y subject
+git log --format="%h %s" -10
+
+# 10. Log con información de merge
+git log --format="%h %s (padres: %p)" --merges
+```
+
+**Opciones de --date para git log:**
+
+```bash
+git log --format="%h %ad %s" --date=relative   # "2 hours ago"
+git log --format="%h %ad %s" --date=local      # Zona horaria local
+git log --format="%h %ad %s" --date=iso        # ISO 8601
+git log --format="%h %ad %s" --date=iso-strict # ISO 8601 estricto
+git log --format="%h %ad %s" --date=rfc        # RFC 2822
+git log --format="%h %ad %s" --date=short      # YYYY-MM-DD
+git log --format="%h %ad %s" --date=raw        # Timestamp + zona
+git log --format="%h %ad %s" --date=unix       # Timestamp UNIX
+git log --format="%h %ad %s" --date=format:"%Y-%m-%d %H:%M"  # Personalizado
+git log --format="%h %ad %s" --date=human      # Formato legible
+git log --format="%h %ad %s" --date=default    # Formato por defecto
+```
+
+---
+
+#### 3. git show-ref
+
+**Descripción:** Muestra referencias disponibles en el repositorio local.
+
+**Sintaxis:**
+```bash
+git show-ref [<opciones>] [<patrón>]
+```
+
+**Salida por defecto:**
+```bash
+git show-ref
+
+# Formato: <hash> <refname>
+a1b2c3d4... refs/heads/main
+e5f6g7h8... refs/heads/develop
+i9j0k1l2... refs/remotes/origin/main
+m3n4o5p6... refs/tags/v1.0.0
+```
+
+**Opciones:**
+
+```bash
+--head              # Incluir HEAD
+--heads             # Solo ramas locales (refs/heads/)
+--tags              # Solo tags (refs/tags/)
+-d, --dereference   # Mostrar objeto al que apunta un tag anotado
+--hash[=<n>]        # Solo mostrar hash (opcionalmente primeros n chars)
+--abbrev[=<n>]      # Abreviar hash a n caracteres
+--quiet             # No mostrar nada, solo retornar código de salida
+--verify            # Verificar que existe exactamente una referencia
+--exclude-existing  # Filtrar refs que ya existen
+```
+
+**Ejemplos:**
+
+```bash
+# 1. Ver todas las referencias
+git show-ref
+
+# 2. Solo ramas locales
+git show-ref --heads
+
+# 3. Solo tags
+git show-ref --tags
+
+# 4. Buscar una rama específica
+git show-ref main
+# a1b2c3d4... refs/heads/main
+# i9j0k1l2... refs/remotes/origin/main
+
+# 5. Solo el hash
+git show-ref --hash refs/heads/main
+# a1b2c3d4e5f6...
+
+# 6. Hash abreviado
+git show-ref --hash --abbrev refs/heads/main
+# a1b2c3d
+
+# 7. Verificar que existe una referencia
+git show-ref --verify refs/heads/main
+# Retorna 0 si existe, 1 si no
+
+# 8. Con HEAD
+git show-ref --head
+
+# 9. Tags con dereferencia (objeto apuntado)
+git show-ref --tags --dereference
+# m3n4o5p6... refs/tags/v1.0.0
+# a1b2c3d4... refs/tags/v1.0.0^{}  (commit al que apunta)
+```
+
+---
+
+#### 4. Otros comandos que usan placeholders
+
+##### git branch --format
+
+```bash
+# Formato personalizado para ramas
+git branch --format="%(refname:short) → %(upstream:short) %(upstream:track)"
+
+# Con colores
+git branch --format="%(color:green)%(refname:short)%(color:reset) %(upstream:trackshort)"
+```
+
+##### git tag --format
+
+```bash
+# Listar tags con información
+git tag --format="%(refname:short): %(subject) - %(authorname)"
+
+# Tags ordenados por fecha
+git tag --sort=-creatordate --format="%(creatordate:short) %(refname:short)"
+```
+
+---
+
+### Formato avanzado: condicionales y alineación
+
+#### Condicionales
+
+```bash
+# Sintaxis: %(if:condition)%(then)TEXTO%(else)OTRO%(end)
+
+# Ejemplo: mostrar upstream solo si existe
+git for-each-ref --format="%(refname:short) %(if)%(upstream)%(then)→ %(upstream:short)%(end)" refs/heads/
+
+# Ejemplo: color según si está merged
+git for-each-ref --format="%(if:equals=refs/heads/main)%(refname)%(then)%(color:green)%(end)%(refname:short)%(color:reset)"
+```
+
+#### Alineación
+
+```bash
+# %(align:<width>,<position>)TEXTO%(end)
+# position: left, right, middle
+
+# Ejemplo: tabla alineada
+git for-each-ref --format="%(align:20,left)%(refname:short)%(end) %(align:10,right)%(objectname:short)%(end) %(subject)" refs/heads/
+
+# Salida:
+# main                  a1b2c3d    Initial commit
+# develop               e4f5g6h    Add feature
+# feature/login         i7j8k9l    Login page
+```
+
+---
+
+### Casos de uso prácticos
+
+#### 1. Listar ramas desactualizadas
+
+```bash
+git for-each-ref --sort=-committerdate --format="%(committerdate:short) %(refname:short)" refs/heads/ | head -10
+```
+
+#### 2. Encontrar ramas sin upstream
+
+```bash
+git for-each-ref --format="%(if)%(upstream)%(then)%(else)%(refname:short)%(end)" refs/heads/ | grep -v '^$'
+```
+
+#### 3. Exportar historial para análisis
+
+```bash
+git log --format="%H,%an,%ae,%ad,%s" --date=iso-strict --all > commits.csv
+```
+
+#### 4. Verificar firmas GPG
+
+```bash
+git log --format="%h %G? %GS: %s" --show-signature
+```
+
+#### 5. Listar ramas merged y no merged
+
+```bash
+# Merged en main
+git for-each-ref --merged=main --format="✓ %(refname:short)" refs/heads/
+
+# No merged en main
+git for-each-ref --no-merged=main --format="✗ %(refname:short)" refs/heads/
+```
+
+#### 6. Ver estado de tracking de todas las ramas
+
+```bash
+git for-each-ref --format="%(refname:short)%(if)%(upstream)%(then) → %(upstream:short) %(upstream:track)%(else) (sin upstream)%(end)" refs/heads/
+
+# Salida:
+# main → origin/main [ahead 2, behind 1]
+# develop → origin/develop [up to date]
+# feature/login (sin upstream)
+```
+
+#### 7. Buscar quién hizo el último commit en cada rama
+
+```bash
+git for-each-ref --format="%(refname:short): %(authorname) - %(authordate:relative)" refs/heads/
+```
+
+#### 8. Script para limpiar ramas merged
+
+```bash
+#!/bin/bash
+# Listar ramas merged (excepto main/develop) y eliminarlas
+git for-each-ref --format="%(refname:short)" --merged=main refs/heads/ | \
+  grep -v -E '^(main|develop)$' | \
+  xargs -r git branch -d
+```
+
+#### 9. Log estilo commit convencional
+
+```bash
+git log --format="%C(yellow)%h%C(reset) %C(blue)%ad%C(reset) %C(green)%an%C(reset)%n  %s%n" --date=short
+```
+
+#### 10. Comparar fechas de autor vs committer
+
+```bash
+git log --format="Commit: %h%nAutor fecha: %ai%nCommitter fecha: %ci%nDiferencia: %ar vs %cr%n---"
+```
+
+---
+
+### Resumen de placeholders más usados
+
+| Placeholder | Descripción | Ejemplo de salida |
+|-------------|-------------|-------------------|
+| `%(refname)` | Nombre completo de ref | `refs/heads/main` |
+| `%(refname:short)` | Nombre corto de ref | `main` |
+| `%(objectname)` | Hash SHA-1 completo | `a1b2c3d4e5f6...` |
+| `%(objectname:short)` | Hash abreviado | `a1b2c3d` |
+| `%(upstream)` | Rama upstream | `refs/remotes/origin/main` |
+| `%(upstream:short)` | Upstream corto | `origin/main` |
+| `%(upstream:track)` | Estado tracking | `[ahead 2, behind 1]` |
+| `%(upstream:trackshort)` | Estado abreviado | `<>` |
+| `%(authorname)` | Nombre del autor | `Juan Pérez` |
+| `%(authoremail)` | Email del autor | `juan@example.com` |
+| `%(authordate)` | Fecha del autor | `Tue Feb 13 14:30:00 2024` |
+| `%(subject)` | Primera línea mensaje | `Add login feature` |
+| `%(contents)` | Mensaje completo | Todo el mensaje |
+| `%h` (git log) | Hash abreviado | `a1b2c3d` |
+| `%s` (git log) | Subject | `Fix bug` |
+| `%an` (git log) | Autor nombre | `Juan Pérez` |
+| `%ad` (git log) | Autor fecha | Según `--date` |
+| `%d` (git log) | Refs decoradas | `(HEAD -> main, origin/main)` |
+
+---
+
+### Mejores prácticas
+
+✅ **Usar en scripts:** Ideal para automatización y CI/CD  
+✅ **Exportar datos:** CSV, JSON-like para análisis  
+✅ **Personalizar salidas:** Adaptar a tus necesidades  
+✅ **Combinación con otros comandos:** Potente con grep, awk, etc.
+
+❌ **No abusar de colores en scripts:** Solo para terminal  
+❌ **No confiar en orden sin --sort:** Especifica orden explícitamente  
+❌ **Cuidado con caracteres especiales:** Sanitizar para shell
+
+---
+
+### Troubleshooting
+
+**Problema:** El formato no muestra lo esperado
+```bash
+# Verificar que el campo existe
+git for-each-ref --format="%(refname) %(upstream)" refs/heads/
+# Si upstream está vacío, esa rama no tiene tracking
+```
+
+**Problema:** Fechas en formato incorrecto
+```bash
+# Especificar formato de fecha
+git for-each-ref --format="%(authordate:short)" refs/heads/
+```
+
+**Problema:** Condicionales no funcionan
+```bash
+# Asegurar sintaxis correcta
+git for-each-ref --format="%(if)%(upstream)%(then)Tiene upstream%(else)Sin upstream%(end)" refs/heads/
+```
+
+---
+
+### Recursos adicionales
+
+- `git help for-each-ref` - Documentación completa de placeholders
+- `git help log` - Sección PRETTY FORMATS
+- [Git Documentation - for-each-ref](https://git-scm.com/docs/git-for-each-ref)
+- [Git Documentation - log formats](https://git-scm.com/docs/git-log#_pretty_formats)
 
 ---
 
