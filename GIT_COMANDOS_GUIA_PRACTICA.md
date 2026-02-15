@@ -68,7 +68,7 @@ Esta guía cubre los **21 comandos Git más importantes** que todo desarrollador
 **¿Qué hace?**
 Prepara cambios del working directory para el próximo commit, moviéndolos al staging area (index).
 
-**Funcionamiento interno:**
+**Funcionamiento interno:** [🔙](#1-git-add---preparando-cambios)
 
 ```
 Internamente hace:
@@ -130,7 +130,7 @@ git add -p archivo.txt
 # → Puedes stagear solo PARTE de un archivo
 ```
 
-**Caso de uso real: Commits atómicos con -p** [🔙](#1-git-add---preparando-cambios)
+**Caso de uso real: Commits atómicos con -p:** [🔙](#1-git-add---preparando-cambios)
 
 ```bash
 Escenario: Modificaste un archivo con 2 features diferentes
@@ -210,7 +210,7 @@ git add -v archivo.txt
 # → Muestra qué archivos se añaden
 ```
 
-**Ver qué está stageado:**
+**Ver qué está stageado:** [🔙](#1-git-add---preparando-cambios)
 
 ```bash
 # Ver estado
@@ -228,7 +228,7 @@ git diff
 # → Que NO están en staging
 ```
 
-**Mejores prácticas:**
+**Mejores prácticas:** [🔙](#1-git-add---preparando-cambios)
 
 ```bash
 ✓ Usa git add -p para commits granulares
@@ -250,7 +250,6 @@ git commit -m "feat: Add feature B"
 
 **Mejores prácticas:**
 
-```bash
 ✓ Usa git add -p para commits granulares
 ✓ Revisa con git diff --staged antes de commit
 ✓ Usa .gitignore para archivos que nunca deben añadirse
@@ -267,7 +266,8 @@ git commit -m "feat: Add feature B"
 **¿Qué hace?**
 Crea un snapshot inmutable del proyecto con los cambios del staging area.
 
-**Funcionamiento interno:**
+**Funcionamiento interno:** [🔙](#2-git-commit---guardando-la-historia)
+
 ```
 1. Crea tree object del staging
 2. Crea commit object con tree + parent + metadata
@@ -275,7 +275,7 @@ Crea un snapshot inmutable del proyecto con los cambios del staging area.
 4. Actualiza reflog
 ```
 
-**Uso práctico:**
+**Uso práctico:** [🔙](#2-git-commit---guardando-la-historia)
 
 ```bash
 # 1. Commit básico
@@ -358,7 +358,7 @@ git commit -C <commit-hash>
 git commit -c <commit-hash>
 ```
 
-**Casos de uso del --amend:**
+**Casos de uso del --amend:** [🔙](#2-git-commit---guardando-la-historia)
 
 ```bash
 # Caso 1: Olvidaste un archivo
@@ -379,7 +379,7 @@ git commit --amend
 # Si ya hiciste push, necesitarás force push (peligroso en ramas compartidas)
 ```
 
-**Opciones de formato de mensaje:**
+**Opciones de formato de mensaje:** [🔙](#2-git-commit---guardando-la-historia)
 
 ```bash
 # Mensaje desde archivo
@@ -396,7 +396,7 @@ git commit --cleanup=strip -m "  Mensaje con espacios  "
 git commit --cleanup=verbatim -m "Mensaje exacto"
 ```
 
-**Commits interactivos:**
+**Commits interactivos:** [🔙](#2-git-commit---guardando-la-historia)
 
 ```bash
 # Commit interactivo (elige qué añadir)
@@ -405,7 +405,7 @@ git commit -p
 # → Selecciona hunks a commitear
 ```
 
-**Mensajes de commit efectivos (Conventional Commits):**
+**Mensajes de commit efectivos (Conventional Commits):** [🔙](#2-git-commit---guardando-la-historia)
 
 ```bash
 feat: Add user authentication
@@ -430,7 +430,7 @@ feat(api): Add user registration
 Closes #123
 ```
 
-**Troubleshooting común:**
+**Troubleshooting común:** [🔙](#2-git-commit---guardando-la-historia)
 
 ```bash
 # Problema 1: "Nothing to commit"
@@ -470,7 +470,7 @@ git commit -m "Mensaje"
 # Solución: Ver sección "git reset" o "git revert" según el caso
 ```
 
-**Mejores prácticas:**
+**Mejores prácticas:** [🔙](#2-git-commit---guardando-la-historia)
 
 ```bash
 ✓ Commits pequeños y atómicos
@@ -491,7 +491,8 @@ git commit -m "Mensaje"
 **¿Qué hace?**
 Muestra el estado actual del working directory y staging area.
 
-**Funcionamiento interno:**
+**Funcionamiento interno:** [🔙](#3-git-status---inspeccionando-el-estado)
+
 ```
 1. Compara working directory con HEAD
 2. Compara staging con HEAD
@@ -499,7 +500,7 @@ Muestra el estado actual del working directory y staging area.
 4. Compara con refs/remotes para ahead/behind
 ```
 
-**Uso práctico:**
+**Uso práctico:** [🔙](#3-git-status---inspeccionando-el-estado)
 
 ```bash
 # Status normal (verbose)
@@ -533,7 +534,7 @@ git status --ignored
 git status --porcelain
 ```
 
-**Interpretación del output:**
+**Interpretación del output:** [🔙](#3-git-status---inspeccionando-el-estado)
 
 ```bash
 # OUTPUT DE git status (verbose):
@@ -562,7 +563,7 @@ D  archivo6.txt    # Eliminado, en staging
 R  old.txt -> new.txt  # Renombrado
 ```
 
-**Entendiendo ahead/behind:**
+**Entendiendo ahead/behind:** [🔙](#3-git-status---inspeccionando-el-estado)
 
 ```bash
 # Ahead (adelantado): Tienes commits locales no pusheados
@@ -581,7 +582,7 @@ and have 2 and 3 different commits each, respectively
 → Necesitas reconciliar las diferencias
 ```
 
-**¿Qué hacer cuando hay divergencia (diverged)?**
+**¿Qué hacer cuando hay divergencia (diverged)?:** [🔙](#3-git-status---inspeccionando-el-estado) [🔙](#3-git-status---inspeccionando-el-estado)
 
 ```bash
 # PASO 1: Investigar qué pasó
@@ -626,7 +627,7 @@ git status
 git log --oneline --graph --all
 ```
 
-**Causas comunes de divergencia:**
+**Causas comunes de divergencia:** [🔙](#3-git-status---inspeccionando-el-estado)
 
 ```bash
 # Causa 1: Usaste --amend después de push
@@ -650,7 +651,7 @@ git rebase main  # Reescribe commits
 git push  # ❌ Error: diverged
 ```
 
-**Troubleshooting de divergencia:**
+**Troubleshooting de divergencia:** [🔙](#3-git-status---inspeccionando-el-estado)
 
 ```bash
 # Ver exactamente qué difiere
@@ -666,7 +667,7 @@ git branch backup-antes-de-sincronizar
 # Luego puedes probar diferentes estrategias
 ```
 
-**Mejores prácticas:**
+**Mejores prácticas:** [🔙](#3-git-status---inspeccionando-el-estado)
 
 ```bash
 ✓ Ejecuta git status antes de commit (SIEMPRE)
@@ -685,7 +686,8 @@ git branch backup-antes-de-sincronizar
 **¿Qué hace?**
 Muestra diferencias entre working directory, staging, commits y ramas.
 
-**Funcionamiento interno:**
+**Funcionamiento interno:** [🔙](#4-git-diff---comparando-cambios)
+
 ```
 1. Lee contenido de dos fuentes
 2. Ejecuta algoritmo de diff (Myers, patience, histogram)
@@ -693,7 +695,7 @@ Muestra diferencias entre working directory, staging, commits y ramas.
 4. Formatea output
 ```
 
-**Uso práctico:**
+**Uso práctico:** [🔙](#4-git-diff---comparando-cambios)
 
 ```bash
 # Diff de working (NO stageado)
@@ -735,7 +737,7 @@ git diff -w
 git diff --color-moved
 ```
 
-**Mejores prácticas:**
+**Mejores prácticas:** [🔙](#4-git-diff---comparando-cambios)
 
 ```bash
 ✓ Usa git diff antes de add
@@ -766,14 +768,16 @@ HEAD~3  → 3 commits antes de HEAD
 HEAD~n  → n commits antes de HEAD siguiendo la primera línea
 ```
 
-**Visualización:**
+**Visualización:** [🔙](#41-referencias-de-commits---y-)
+
 ```
 A ← B ← C ← D ← E (HEAD)
 │   │   │   │   │
 ~4  ~3  ~2  ~1  ~0 (o simplemente HEAD)
 ```
 
-**Ejemplos prácticos:**
+**Ejemplos prácticos:** [🔙](#41-referencias-de-commits---y-)
+
 ```bash
 # Ver el commit de hace 3 commits
 git show HEAD~3
@@ -800,17 +804,20 @@ HEAD^2  → Segunda línea de commits (rama mergeada)
 HEAD^3  → Tercera línea de commits (raro, en octopus merge)
 ```
 
-**Visualización de merge:**
+**Visualización de merge:** [🔙](#41-referencias-de-commits---y-)
+
 ```
     A ← B ← C (rama feature)
    /         \
   D ← E ← F ← M (HEAD en main)
               │
          HEAD^1 = F (primera línea, main)
-         HEAD^2 = C (segunda línea, feature)
+         HEAD^2 = C (segunda línea, rama mergeada)
+         HEAD^3 = A (tercera línea, en octopus merge)
 ```
 
-**Ejemplos prácticos:**
+**Ejemplos prácticos:** [🔙](#41-referencias-de-commits---y-)
+
 ```bash
 # Ver qué entró desde la rama mergeada
 git log HEAD^2
@@ -829,7 +836,7 @@ git diff HEAD^1 HEAD^2
 
 ### Combinando `~` y `^`
 
-**Se pueden combinar para navegación compleja:**
+**Se pueden combinar para navegación compleja:** [🔙](#41-referencias-de-commits---y-)
 
 ```bash
 HEAD~2^2   → Segunda línea del commit que está 2 commits atrás (si ese commit es un merge)
@@ -837,25 +844,25 @@ HEAD^^     → Equivalente a HEAD~2 (2 commits atrás)
 HEAD^2~3   → Tres commits atrás desde la segunda línea
 ```
 
-**Ejemplo visual básico:**
+**Ejemplo visual básico:** [🔙](#41-referencias-de-commits---y-)
+
 ```
         A ← B ← C
        /         \
   D ← E ← F ← G ← M (HEAD)
 
-HEAD      → M (commit de merge)
-HEAD^     → G (o HEAD^1, primera línea)
-HEAD^2    → C (segunda línea de M, rama mergeada)
-HEAD^2~2  → A (dos commits atrás desde C: C→B→A)
-HEAD~1    → G (un commit atrás por primera línea)
-HEAD~2    → F (dos commits atrás por primera línea)
-HEAD^^    → F (equivalente a HEAD~2)
+HEAD      → M (merge commit)
+HEAD~1    → G (1 commit atrás)
+HEAD~2    → W (2 commits atrás, también es merge)
+HEAD~2^1  → B (primera línea del commit W)
+HEAD~2^2  → Y (segunda línea del commit W)
 
-Nota: HEAD^2 solo existe porque M es un merge commit.
-      Si HEAD apuntara a un commit normal, HEAD^2 daría error.
+Nota: HEAD~2^2 solo existe si el commit que está 2 commits atrás (W) es un merge.
+      Si W no tiene segunda línea, HEAD~2^2 dará error.
 ```
 
-**Ejemplo visual con HEAD~2^2:**
+**Ejemplo visual con HEAD~2^2:** [🔙](#41-referencias-de-commits---y-)
+
 ```
     X ← Y          (rama lateral)
    /     \
@@ -871,7 +878,8 @@ Nota: HEAD~2^2 solo funciona si el commit que está 2 commits atrás (W) es un m
       Si W no tiene segunda línea, HEAD~2^2 dará error.
 ```
 
-**Ejemplos prácticos:**
+**Ejemplos prácticos:** [🔙](#41-referencias-de-commits---y-)
+
 ```bash
 # Ver el tercer commit de la segunda línea
 git show HEAD^2~3
@@ -893,13 +901,14 @@ git reset HEAD^^
 HEAD@{0}  → Posición actual
 HEAD@{1}  → Dónde estaba HEAD en la operación anterior
 HEAD@{2}  → Dos operaciones atrás
-HEAD@{n}  → n operaciones atrás
+HEAD@{n}  → n-ésima operación atrás
 ```
 
 **¿Qué operaciones mueven HEAD?**
 - commit, checkout, merge, pull, reset, rebase, cherry-pick, etc.
 
-**Visualización:**
+**Visualización:** [🔙](#41-referencias-de-commits---y-)
+
 ```bash
 git reflog
 # Salida:
@@ -908,7 +917,8 @@ def5678 HEAD@{1}: checkout: moving from main to feature
 9ab0cde HEAD@{2}: pull: Fast-forward
 ```
 
-**Ejemplos prácticos:**
+**Ejemplos prácticos:** [🔙](#41-referencias-de-commits---y-)
+
 ```bash
 # Ver dónde estaba HEAD hace 3 operaciones
 git show HEAD@{3}
@@ -949,18 +959,21 @@ git show main@{2024-01-15}
 
 ### Casos de Uso Prácticos
 
-**1. Ver qué traído en un pull:**
+**1. Ver qué traído en un pull:** [🔙](#41-referencias-de-commits---y-)
+
 ```bash
 git log HEAD@{1}..HEAD --oneline
 git diff HEAD@{1} HEAD --name-status
 ```
 
-**2. Deshacer el último commit manteniendo cambios:**
+**2. Deshacer el último commit manteniendo cambios:** [🔙](#41-referencias-de-commits---y-)
+
 ```bash
 git reset --soft HEAD~1
 ```
 
-**3. Ver qué se mergeó desde una rama:**
+**3. Ver qué se mergeó desde una rama:** [🔙](#41-referencias-de-commits---y-)
+
 ```bash
 # Solo funciona si HEAD es un merge commit
 git log HEAD^2 --oneline
@@ -971,13 +984,17 @@ git log <hash-merge>^2 --oneline
 git log HEAD~2^2 --oneline
 ```
 
-**4. Recuperar trabajo perdido:**
+**4. Recuperar trabajo perdido:** [🔙](#41-referencias-de-commits---y-)
+
 ```bash
 git reflog
-git checkout HEAD@{5}  # O el número que necesites
+git switch -c recuperado HEAD@{5}  # Crea rama desde ese punto
+# o para solo ver:
+git switch --detach HEAD@{5}  # Detached HEAD para inspección
 ```
 
-**5. Comparar con versión de ayer:**
+**5. Comparar con versión de ayer:** [🔙](#41-referencias-de-commits---y-)
+
 ```bash
 git diff HEAD@{yesterday} HEAD
 ```
@@ -1003,12 +1020,13 @@ git log HEAD^1..HEAD^2 --oneline
 - `HEAD~1` → Commit anterior en el grafo de commits
 - `HEAD@{1}` → Posición anterior de HEAD (puede ser cualquier commit)
 
-**Ejemplo:**
+**Ejemplo:** [🔙](#41-referencias-de-commits---y-)
+
 ```bash
 # Secuencia de operaciones:
-git checkout main      # HEAD en abc123
-git checkout feature   # HEAD en def456
-git checkout main      # HEAD en abc123 otra vez
+git switch main      # HEAD en abc123
+git switch feature   # HEAD en def456
+git switch main      # HEAD en abc123 otra vez
 
 # Ahora:
 HEAD      → abc123 (main)
@@ -1030,7 +1048,7 @@ git rev-list --parents -n 1 HEAD
 # Si muestra solo 2 hashes → NO es merge (1 línea)
 
 # Ejemplo de error común:
-git checkout main
+git switch main
 git log --oneline -1
 # abc123 Add feature X  ← commit normal, no merge
 
@@ -1040,8 +1058,8 @@ git show HEAD^2
 # Para ver la segunda línea de un merge anterior:
 git log --oneline --graph -5  # Identifica el merge commit
 git show <hash-merge>^2        # Usa el hash del merge
-# O si el merge está en HEAD~3:
-git show HEAD~3^2              # Funciona si HEAD~3 es merge
+# O si el merge está 2 commits atrás:
+git show HEAD~2^2              # Funciona si HEAD~2 es merge
 ```
 
 **Cómo identificar merge commits visualmente:**
@@ -1061,6 +1079,8 @@ git log --oneline --graph --all
 ---
 
 ### Mejores Prácticas
+
+[🔙](#41-referencias-de-commits---y-)
 
 ```bash
 ✓ Usa ~ para navegar historia lineal
@@ -1084,7 +1104,8 @@ git log --oneline --graph --all
 **¿Qué hace?**
 Muestra la historia de commits del repositorio con múltiples opciones de filtrado, formato y análisis. Es una herramienta fundamental para entender la evolución del código, buscar bugs, auditar cambios y analizar contribuciones.
 
-**Funcionamiento interno:**
+**Funcionamiento interno:** [🔙](#5-git-log---explorando-la-historia)
+
 ```
 1. Lee HEAD (o referencia especificada)
 2. Obtiene commit object del hash
@@ -1100,7 +1121,7 @@ Optimizaciones:
 - Traversal paralelo en repos grandes
 ```
 
-**Uso práctico - Formatos básicos:**
+**Uso práctico - Formatos básicos:** [🔙](#5-git-log---explorando-la-historia)
 
 ```bash
 # ============================================
@@ -1133,7 +1154,7 @@ git log --oneline --graph
 # |\
 # | * def456 Add feature
 # |/
-# * 789abc Initial commit
+# * 789abc Fix bug
 
 # 5. Log con grafo de todas las ramas
 git log --oneline --graph --all
@@ -1175,7 +1196,7 @@ git log --pretty=fuller
 git log --pretty=reference
 ```
 
-**Uso práctico - Filtros por rango de commits:**
+**Uso práctico - Filtros por rango de commits:** [🔙](#5-git-log---explorando-la-historia)
 
 ```bash
 # ============================================
@@ -1211,7 +1232,7 @@ git log HEAD --not origin/main --not origin/develop
 # 4. Commits que tocan archivo específico
 git log -- archivo.txt
 # → Historia de archivo específico
-# → El "--" previene confusión con ramas
+# → Sigue renames y movimientos
 
 git log --all -- archivo.txt
 # → Busca archivo en TODAS las ramas
@@ -1249,7 +1270,7 @@ git log origin/main..HEAD --oneline
 # → Ver qué falta pushear
 ```
 
-**Uso práctico - Búsquedas y filtros:**
+**Uso práctico - Búsquedas y filtros:** [🔙](#5-git-log---explorando-la-historia)
 
 ```bash
 # ============================================
@@ -1325,7 +1346,7 @@ git log --follow -- archivo.txt
 # → IMPORTANTE para archivos renombrados
 ```
 
-**Uso práctico - Formatos personalizados avanzados:**
+**Uso práctico - Formatos personalizados avanzados:** [🔙](#5-git-log---explorando-la-historia)
 
 ```bash
 # ============================================
@@ -1586,7 +1607,7 @@ git log --oneline --decorate --simplify-by-decoration
 git log -p | grep "old mode\|new mode"
 
 # 10. Formato para code review
-git log --oneline --no-merges --reverse v1.0..HEAD
+git log --oneline --no-merges --reverse v1.0.0..HEAD
 ```
 
 **Alias recomendados para .gitconfig:**
@@ -1711,7 +1732,7 @@ git log --merges --grep="Merge branch 'feature" --oneline
 git log origin/production --oneline | grep abc123
 ```
 
-**Mejores prácticas:**
+**Mejores prácticas:** [🔙](#5-git-log---explorando-la-historia)
 
 ```bash
 ✓ Usa --oneline para overview rápido
@@ -1740,7 +1761,8 @@ git log origin/production --oneline | grep abc123
 **¿Qué hace?**
 Crea, lista, renombra, elimina y gestiona ramas (branches). Las ramas en Git son extremadamente ligeras: solo punteros a commits, no copias de archivos.
 
-**Funcionamiento interno:**
+**Funcionamiento interno:** [🔙](#6-git-branch---gestionando-líneas-de-desarrollo)
+
 ```
 Crear rama:
 1. Obtiene hash del commit actual (HEAD)
@@ -1760,7 +1782,7 @@ Cambiar entre ramas:
 4. Actualiza .git/index (staging area)
 ```
 
-**Uso práctico - Creación de ramas:**
+**Uso práctico - Creación de ramas:** [🔙](#6-git-branch---gestionando-líneas-de-desarrollo)
 
 ```bash
 # ============================================
@@ -1796,7 +1818,7 @@ git branch nueva-copia rama-existente
 # - Sección "git checkout" para método clásico
 ```
 
-**Uso práctico - Listar y ver ramas:**
+**Uso práctico - Listar y ver ramas:** [🔙](#6-git-branch---gestionando-líneas-de-desarrollo)
 
 ```bash
 # ============================================
@@ -1876,7 +1898,7 @@ git branch --sort=authordate
 git branch --sort=objectsize
 ```
 
-**Uso práctico - Eliminar ramas:**
+**Uso práctico - Eliminar ramas:** [🔙](#6-git-branch---gestionando-líneas-de-desarrollo)
 
 ```bash
 # ============================================
@@ -1921,7 +1943,7 @@ git branch -D feature-x feature-y hotfix-z
 # → Borra múltiples sin verificación
 ```
 
-**Uso práctico - Renombrar ramas:**
+**Uso práctico - Renombrar ramas:** [🔙](#6-git-branch---gestionando-líneas-de-desarrollo)
 
 ```bash
 # ============================================
@@ -1952,7 +1974,7 @@ git push -u origin main
 git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
 ```
 
-**Uso práctico - Gestión avanzada:**
+**Uso práctico - Gestión avanzada:** [🔙](#6-git-branch---gestionando-líneas-de-desarrollo)
 
 ```bash
 # ============================================
@@ -2262,7 +2284,7 @@ git branch --contains HEAD main
 git merge-base --is-ancestor HEAD main && echo "Está merged" || echo "NO está merged"
 ```
 
-**Estrategias de branching completas:**
+**Estrategias de branching completas:** [🔙](#6-git-branch---gestionando-líneas-de-desarrollo)
 
 ```bash
 # ============================================
@@ -2278,14 +2300,14 @@ main (estable, deployable)
  └─ hotfix/security-patch
 
 Workflow:
-git checkout main
+git switch main
 git pull origin main
-git checkout -b feature/nueva-feature
+git switch -c feature/nueva-feature
 # ... desarrollo ...
 git push -u origin feature/nueva-feature
 # PR en GitHub/GitLab
 # Tras aprobación:
-git checkout main
+git switch main
 git merge --no-ff feature/nueva-feature
 git push origin main
 git branch -d feature/nueva-feature
@@ -2305,30 +2327,30 @@ develop (integración, siguiente release)
  └─ release/v2.0.0 → merge a main y develop
 
 Workflow nuevas features:
-git checkout develop
-git checkout -b feature/nueva-feature
+git switch develop
+git switch -c feature/nueva-feature
 # ... desarrollo ...
-git checkout develop
+git switch develop
 git merge --no-ff feature/nueva-feature
 git branch -d feature/nueva-feature
 
 Workflow releases:
-git checkout -b release/v1.5.0 develop
+git switch -c release/v1.5.0 develop
 # ... bug fixes, versioning ...
-git checkout main
+git switch main
 git merge --no-ff release/v1.5.0
 git tag -a v1.5.0
-git checkout develop
+git switch develop
 git merge --no-ff release/v1.5.0
 git branch -d release/v1.5.0
 
 Workflow hotfixes:
-git checkout -b hotfix/critical main
+git switch -c hotfix/critical main
 # ... fix urgente ...
-git checkout main
+git switch main
 git merge --no-ff hotfix/critical
 git tag -a v1.5.1
-git checkout develop
+git switch develop
 git merge --no-ff hotfix/critical
 git branch -d hotfix/critical
 
@@ -2343,9 +2365,9 @@ main (siempre deployable)
  └─ update-dependencies
 
 Workflow:
-git checkout main
+git switch main
 git pull origin main
-git checkout -b descriptive-branch-name
+git switch -c descriptive-branch-name
 # ... commits ...
 git push -u origin descriptive-branch-name
 # Abrir Pull Request
@@ -2371,18 +2393,18 @@ Principios:
 - CI/CD muy robusto
 
 Workflow:
-git checkout main
+git switch main
 git pull origin main
-git checkout -b quick-fix
+git switch -c quick-fix
 # ... cambio pequeño ...
 git push -u origin quick-fix
 # PR rápido, merge mismo día
-git checkout main
+git switch main
 git pull origin main
 git branch -d quick-fix
 ```
 
-**Convenciones de nombres de ramas:**
+**Convenciones de nombres de ramas:** [🔙](#6-git-branch---gestionando-líneas-de-desarrollo)
 
 ```bash
 # ============================================
@@ -2422,7 +2444,7 @@ maria/fix-api
 ✗ No uses fechas como única identificación
 ```
 
-**Troubleshooting y problemas comunes:**
+**Troubleshooting y problemas comunes:** [🔙](#6-git-branch---gestionando-líneas-de-desarrollo)
 
 ```bash
 # ============================================
@@ -2430,30 +2452,30 @@ maria/fix-api
 # ============================================
 
 # Problema 1: No puedo cambiar de rama (cambios sin commitear)
-git checkout otra-rama
+git switch otra-rama
 # error: Your local changes would be overwritten
 
 Solución A (commitear):
 git add .
 git commit -m "WIP: trabajo en progreso"
-git checkout otra-rama
+git switch otra-rama
 
 Solución B (stash):
 git stash
-git checkout otra-rama
+git switch otra-rama
 # ... trabajo ...
-git checkout rama-original
+git switch rama-original
 git stash pop
 
 Solución C (forzar, ⚠️ pierdes cambios):
-git checkout -f otra-rama
+git switch -f otra-rama
 
 # Problema 2: Borré rama por error
 git reflog
 # Encuentra el commit donde estaba la rama
 git branch rama-recuperada abc123
 # o:
-git checkout -b rama-recuperada abc123
+git switch -c rama-recuperada abc123
 
 # Problema 3: Rama no se elimina (no mergeada)
 git branch -d feature-x
@@ -2504,7 +2526,7 @@ git rev-parse --abbrev-ref HEAD
 git status | head -1
 ```
 
-**Mejores prácticas:**
+**Mejores prácticas:** [🔙](#6-git-branch---gestionando-líneas-de-desarrollo)
 
 ```bash
 ✓ Usa nombres descriptivos (feature/user-auth)
@@ -2532,7 +2554,8 @@ Cambia de rama, navega por commits históricos, o restaura archivos del working 
 >
 > **Recomendación:** Usa `git switch` para ramas y `git restore` para archivos.
 
-**Funcionamiento interno:**
+**Funcionamiento interno:** [🔙](#7-git-checkout--git-switch---navegando-el-código)
+
 ```
 Al cambiar de rama:
 1. Verifica que no haya conflictos con working directory
@@ -2561,7 +2584,7 @@ Al checkout de commit (detached HEAD):
 
 ### 7.1. git switch - Cambiar de Rama (Moderno, Recomendado)
 
-**Uso práctico - Cambiar entre ramas:**
+**Uso práctico - Cambiar entre ramas:** [🔙](#7-git-checkout--git-switch---navegando-el-código)
 
 ```bash
 # 1. Cambiar a rama existente
@@ -2599,7 +2622,7 @@ git switch feature-x
 # → Crea local automáticamente con tracking
 ```
 
-**Uso práctico - Detached HEAD con switch:**
+**Uso práctico - Detached HEAD con switch:** [🔙](#7-git-checkout--git-switch---navegando-el-código)
 
 ```bash
 # Entrar en Detached HEAD
@@ -2615,7 +2638,7 @@ git switch --detach v1.0.0
 
 ### 7.2. git restore - Restaurar Archivos (Moderno, Recomendado)
 
-**Uso práctico - Descartar cambios:**
+**Uso práctico - Descartar cambios:** [🔙](#7-git-checkout--git-switch---navegando-el-código)
 
 ```bash
 # 1. Descartar cambios en working directory
@@ -2652,7 +2675,7 @@ git restore 'src/**/*.txt'
 git restore src/
 ```
 
-**Uso práctico - Casos especiales:**
+**Uso práctico - Casos especiales:** [🔙](#7-git-checkout--git-switch---navegando-el-código)
 
 ```bash
 # Restaurar archivo de otra rama sin cambiar de rama
@@ -2834,7 +2857,7 @@ git status
 
 ### Casos de Uso Avanzados
 
-**Caso 1: Olvidé cambiar de rama antes de trabajar**
+**Caso 1: Olvidé cambiar de rama antes de trabajar** [🔙](#7-git-checkout--git-switch---navegando-el-código)
 
 ```bash
 # Estás en main, hiciste cambios, querías estar en feature
@@ -2941,6 +2964,8 @@ git checkout -b recuperar HEAD@{1}
 
 ### Mejores Prácticas
 
+[🔙](#7-git-checkout--git-switch---navegando-el-código)
+
 ```bash
 ✓ Usa git switch para cambiar ramas (claro y específico)
 ✓ Usa git restore para archivos (sin ambigüedad)
@@ -2964,7 +2989,7 @@ git checkout -b recuperar HEAD@{1}
 **¿Qué hace?**
 Integra cambios de una rama en otra, combinando el trabajo de diferentes líneas de desarrollo. Es uno de los comandos más críticos en Git para la colaboración en equipo.
 
-**Funcionamiento interno:**
+**Funcionamiento interno:** [🔙](#8-git-merge---integrando-cambios)
 
 ```
 Git merge puede operar de 3 formas diferentes:
@@ -3016,7 +3041,7 @@ Internamente:
 6. Si hay conflictos → pausa y marca conflictos
 ```
 
-**Todas las opciones importantes:**
+**Todas las opciones importantes:** [🔙](#8-git-merge---integrando-cambios)
 
 ```bash
 # ============================================
@@ -3176,7 +3201,7 @@ ls -la .git/
 # → Contiene SHA del commit siendo mergeado
 ```
 
-**Resolución de conflictos - Guía completa:**
+**Resolución de conflictos - Guía completa:** [🔙](#8-git-merge---integrando-cambios)
 
 ```bash
 # ============================================
@@ -4366,7 +4391,7 @@ git log HEAD@{1}..HEAD --oneline --graph --stat
 # → Combinación visual con archivos y estadísticas
 ```
 
-**Ejemplo práctico completo - Después de pull:**
+**Ejemplo práctico completo - Después de pull:** [🔙](#5-git-log---explorando-la-historia)
 
 ```bash
 # Acabas de hacer: git pull
@@ -4419,9 +4444,18 @@ $ git diff HEAD@{1} HEAD -- src/auth/login.js
 # Paso 6: Verificar sincronización con remoto
 $ git diff origin/main
 # (vacío = perfectamente sincronizado)
+# Si hay diferencias, tienes commits locales sin pushear
+
+# Paso 7: Ver cuántos commits se trajeron
+$ git rev-list --count HEAD@{1}..HEAD
+# → Número de commits traídos
+
+# Paso 8: Ver resumen visual con grafo
+git log HEAD@{1}..HEAD --oneline --graph --stat
+# → Combinación visual con archivos y estadísticas
 ```
 
-**Comandos rápidos de verificación post-pull:**
+**Comandos rápidos de verificación post-pull:** [🔙](#5-git-log---explorando-la-historia)
 
 ```bash
 # Ver últimos 5 commits (incluyendo los traídos)
@@ -4437,7 +4471,7 @@ git log HEAD@{1}..HEAD --oneline --graph --decorate --stat
 git diff HEAD@{2} HEAD
 ```
 
-**⚠️ Notas importantes sobre HEAD@{n}:**
+**⚠️ Notas importantes sobre HEAD@{n}:** [🔙](#5-git-log---explorando-la-historia)
 
 ```bash
 # HEAD@{n} es del REFLOG (historial de operaciones)
@@ -4451,6 +4485,7 @@ git reflog
 HEAD@{0}  → Estado actual
 HEAD@{1}  → Operación anterior (puede NO ser el pull)
 HEAD@{2}  → Dos operaciones atrás
+HEAD@{n}  → n-ésima operación atrás
 
 # Para asegurar que comparas con el pull correcto:
 git reflog
